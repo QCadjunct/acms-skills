@@ -1,102 +1,41 @@
-fqsn: CodingArchitecture/FabricStitch/extract_wisdom
-version: 1.0.0
+fqsn: CodingArchitecture/FabricStitch/ACMS_extract_wisdom
+identity: You are an ACMS Fabric Stitching Pipeline agent for Mind Over Metadata LLC. You extract wisdom from any text source using a multi-vendor Fabric pattern stitching pipeline governed by the Spec-Driven Development (SDD) methodology.
 agent_type: BASH
-status: active
-created: 2026-03-12
-author: Peter Heller
-organization: Mind Over Metadata LLC
-
-execution:
-  runtime: bash
-  environment: WSL2
-  entry_point: ../../../FabricStitch/bash.cli/fabric_stitch.sh
-
-input:
-  sources: [youtube_url, file_path, stdin]
-  required: true
-  output_dir: optional
-
-steps:
-  - id: 1
-    pattern: extract_wisdom
-    vendor: Gemini
-    model: gemini-2.5-flash
-    input: source
-    output: 01_wisdom.md
-
-  - id: 2
-    pattern: summarize
-    vendor: Anthropic
-    model: claude-sonnet-4-20250514
-    input: 01_wisdom.md
-    output: 02_summary.md
-
-  - id: 3
-    pattern: extract_insights
-    vendor: Gemini
-    model: gemini-2.5-flash
-    input: 01_wisdom.md
-    output: 03_insights.md
-
-  - id: 4
-    pattern: create_tags
-    vendor: Ollama
-    model: qwen3:8b
-    input: 02_summary.md
-    output: 04_tags.md
-
-  - id: 5
-    pattern: pandoc
-    vendor: none
-    model: none
-    input: "01_wisdom.md 02_summary.md 03_insights.md 04_tags.md"
-    output: "00_full_report.md full_report.pdf full_report.docx full_report.html"
-
+task_group: DataExtract
+workspace_key: session_id (TIMESTAMP)
+audit_log: audit.log
+parameters:
+- Input source: YouTube URL, file path, or stdin (required)
+- Output directory (optional, defaults to ./output)
+pipeline_steps:
+- extract_wisdom   — primary insight extraction       (Gemini Flash)
+- summarize        — condensed summary from wisdom    (Claude Sonnet)
+- extract_insights — distilled key insights           (Gemini Flash)
+- create_tags      — categorization tags              (Ollama local)
+- pandoc           — multi-format output              (no LLM)
+inputs:
+- Text source: YouTube URL, file path, or stdin (required)
+- Output directory (optional, defaults to ./output)
 outputs:
-  formats: [md, pdf, docx, html]
-  pdf_engine: xelatex
-  metadata_title: "ACMS Fabric Stitch Report"
-
-audit:
-  log_file: audit.log
-  fields:
-    - session
-    - source
-    - step
-    - vendor
-    - model
-    - duration_ms
-    - input_tokens
-    - output_tokens
-    - cost
-    - status
-
-dependencies:
-  wsl2:
-    - fabric >= 1.4.400
-    - pandoc >= 3.1.3
-    - xelatex
-  uv:
-    - tiktoken
-  api_keys:
-    - ANTHROPIC_API_KEY
-    - GEMINI_API_KEY
-    - YOUTUBE_API_KEY
-
-vendors:
-  Gemini:
-    input_rate_per_1m: 0.075
-    output_rate_per_1m: 0.30
-  Anthropic:
-    input_rate_per_1m: 3.00
-    output_rate_per_1m: 15.00
-  Ollama:
-    input_rate_per_1m: 0.00
-    output_rate_per_1m: 0.00
-
-acms:
-  agent_type: BASH
-  task_group: DataExtract
-  workspace_key: session_id
-  audit_log: audit.log
-  toon_format: system.toon
+- 01_wisdom.md
+- 02_summary.md
+- 03_insights.md
+- 04_tags.md
+- 00_full_report.md
+- full_report.pdf
+- full_report.docx
+- full_report.html
+runtime_requirements:
+- fabric >= 1.4.400 (WSL2)
+- pandoc >= 3.1.3 + xelatex
+- uv + tiktoken (token counting)
+- ANTHROPIC_API_KEY
+- GEMINI_API_KEY
+- YOUTUBE_API_KEY in ~/.config/fabric/.env
+behavioral_contract:
+- Input source is a parameter: YouTube URL, file path, or stdin
+- Each pipeline step binds to an independently configured LLM vendor
+- Vendor assignments are defined in system.yaml
+- Token counts and cost estimates are calculated per step
+- All executions are recorded in audit.log
+- Output formats: md, pdf, docx, html
