@@ -144,7 +144,7 @@ PROD     patterns/ACMS_extract_wisdom/
 
 ## Architecture Decision Records
 
-Seven ADRs govern this repository — documented in  
+Eight ADRs govern this repository — documented in  
 `Mind-Over-Metadata/10-AI-Agent-Orchestration/ACMS-Architecture-Decisions-20260313.md`
 
 | ADR | Decision |
@@ -156,6 +156,23 @@ Seven ADRs govern this repository — documented in
 | ADR-005 | uuidv7 archive versioning |
 | ADR-006 | Cost accounting as bash utility standard |
 | ADR-007 | Three-file skill standard validated end-to-end |
+| ADR-008 | stdlib-only Python hook script pattern — see [CREDITS.md](./CREDITS.md) |
+
+---
+
+## Acknowledgments
+
+The **stdlib-only Python tooling pattern** used in skill lifecycle hook scripts —
+deterministic pre/post processing implemented as zero-dependency Python scripts —
+is adapted from Reza Rezvani's `claude-skills` repository
+(github.com/alirezarezvani/claude-skills), used under open source license.
+
+The ACMS architectural framework, FQSN taxonomy, three-file skill standard
+(system.md / system.yaml / system.toon), TOON serialization, two-pillar hierarchy,
+deployment pipeline, cost accounting standard, and D⁴ methodology are original
+work of **Peter Heller / Mind Over Metadata LLC © 2026**.
+
+See [CREDITS.md](./CREDITS.md) for the full attribution record and boundary statement.
 
 ---
 
