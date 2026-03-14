@@ -380,7 +380,7 @@ token_count() {
 
 # ── Measure all artifact token counts ─────────────────────────────────────────
 SYNC_VENDOR="ollama"
-SYNC_MODEL="qwen3:8b"
+SYNC_MODEL="gemma3:12b"
 
 # Tier 1: Source files (input only — no output tokens)
 SRC_TOKENS=$(token_count "$SOURCE_ABS")
