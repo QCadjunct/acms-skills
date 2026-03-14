@@ -1,30 +1,30 @@
 fqsn:CodingArchitecture/FabricStitch/ACMS_extract_wisdom
-id:ACMS Fabric Stitching Pipeline agent
+id:You are an ACMS Fabric Stitching Pipeline agent for Mind Over Metadata LLC.
 agt:BASH
 tgrp:DataExtract
-wkey:session_id
+wkey:session_id (TIMESTAMP)
 alog:audit.log
 params:
-  Text source: str
-  Output directory: str
+  text_source: str|path|url
+  output_dir: str|path
 steps:
-  - 1: extract_wisdom — primary insight extraction (Gemini Flash)
-  - 2: summarize — condensed summary from wisdom (Claude Sonnet)
-  - 3: extract_insights — distilled key insights (Gemini Flash)
-  - 4: create_tags — categorization tags (Ollama local)
-  - 5: pandoc — multi-format output (no LLM)
+  - 1: extract_wisdom — primary insight extraction       (Gemini Flash)
+  - 2: summarize — condensed summary from wisdom    (Claude Sonnet)
+  - 3: extract_insights — distilled key insights           (Gemini Flash)
+  - 4: create_tags — categorization tags              (Ollama local)
+  - 5: pandoc — multi-format output              (no LLM)
 inputs:
-  - Text source: YouTube URL, file path, or stdin (required)
-  - Output directory: optional, defaults to ./output
+  - text_source: YouTube URL, file path, or stdin (required)
+  - output_dir: Output directory (optional, defaults to ./output)
 outputs:
-  - 01_wisdom.md
-  - 02_summary.md
-  - 03_insights.md
-  - 04_tags.md
-  - 00_full_report.md
-  - full_report.pdf
-  - full_report.docx
-  - full_report.html
+  - 01_wisdom.md: Primary wisdom extraction
+  - 02_summary.md: Condensed summary
+  - 03_insights.md: Key insights
+  - 04_tags.md: Categorization tags
+  - 00_full_report.md: Full report
+  - full_report.pdf: PDF output
+  - full_report.docx: Word output
+  - full_report.html: HTML output
 contract:
   - Input source is a parameter: YouTube URL, file path, or stdin
   - Each pipeline step binds to an independently configured LLM vendor

@@ -4,19 +4,19 @@ agent_type: BASH
 task_group: DataExtract
 workspace_key: session_id (TIMESTAMP)
 audit_log: audit.log
-parameters: 
+parameters:
 - Input source: YouTube URL, file path, or stdin (required)
 - Output directory (optional, defaults to ./output)
-pipeline_steps: 
+pipeline_steps:
 - extract_wisdom   — primary insight extraction       (Gemini Flash)
 - summarize        — condensed summary from wisdom    (Claude Sonnet)
 - extract_insights — distilled key insights           (Gemini Flash)
 - create_tags      — categorization tags              (Ollama local)
 - pandoc           — multi-format output              (no LLM)
-inputs: 
+inputs:
 - Text source: YouTube URL, file path, or stdin (required)
 - Output directory (optional, defaults to ./output)
-outputs: 
+outputs:
 - 01_wisdom.md
 - 02_summary.md
 - 03_insights.md
@@ -25,14 +25,14 @@ outputs:
 - full_report.pdf
 - full_report.docx
 - full_report.html
-runtime_requirements: 
+runtime_requirements:
 - fabric >= 1.4.400 (WSL2)
 - pandoc >= 3.1.3 + xelatex
 - uv + tiktoken (token counting)
 - ANTHROPIC_API_KEY
 - GEMINI_API_KEY
 - YOUTUBE_API_KEY in ~/.config/fabric/.env
-behavioral_contract: 
+behavioral_contract:
 - Input source is a parameter: YouTube URL, file path, or stdin
 - Each pipeline step binds to an independently configured LLM vendor
 - Vendor assignments are defined in system.yaml
