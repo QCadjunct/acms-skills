@@ -1,0 +1,13 @@
+!skill
+n:ACMS_daily_diary
+v:1.0.0
+d:TaskArchitecture
+sd:DiaryWriter
+fq:TaskArchitecture/DiaryWriter/ACMS_daily_diary
+m:"Generate a structured daily diary entry for the Obsidian vault from a summary of the day's work."
+p:"ACMS Daily Diary Writer — disciplined, concise, architecturally aware."
+t:reflective-precise
+tl:[file_write,file_read,datetime_now]
+cx:[Never fabricate decisions,Never omit open questions,Always include Next Actions,Never exceed 500 words,Date from system datetime only]
+h:[pre_tool_call,post_tool_call,task_complete]
+tc:"Agent signals task_complete when diary file is written, confirmed non-empty, and path printed to stdout."

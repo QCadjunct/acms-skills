@@ -1,0 +1,122 @@
+# vendor_rates.yaml
+# ACMS Single Source of Truth — LLM Cost Rates
+# © 2026 Mind Over Metadata LLC — Peter Heller
+#
+# DO NOT EDIT DERIVED ARTIFACTS — edit this file only
+# Run: ./refresh_rates.sh to pull current rates on demand
+#
+# Last updated: 2026-03-14
+# Updated by: Peter Heller (manual baseline)
+# Next update: run refresh_rates.sh before March 16 demo
+#
+# Consumers:
+#   - deploy_generators.sh  (Step 9: cost receipt)
+#   - fabric_stitch.sh      (per-step cost estimation)
+#   - sync_skill.sh         (regeneration cost tracking)
+#   - LangGraph EXC nodes   (runtime cost accumulation)
+#   - Marimo monitor        (cost dashboard)
+#   - audit logs            (~/.config/fabric/cost_audit.log)
+
+meta:
+  schema_version: "1.0.0"
+  currency: USD
+  unit: per_token
+  precision: 12          # decimal places for per-token math
+  validated_date: "2026-03-14"
+  validation_source: "manual — Anthropic/Google pricing pages"
+  refresh_script: "./refresh_rates.sh"
+
+vendors:
+
+  anthropic:
+    display_name: "Anthropic"
+    homepage: "https://www.anthropic.com/pricing"
+    models:
+      claude-sonnet-4-6:
+        display_name: "Claude Sonnet 4.6"
+        input:  0.000003      # $3.00 per 1M tokens
+        output: 0.000015      # $15.00 per 1M tokens
+        context_window: 200000
+        notes: "Primary ACMS Navigator model"
+      claude-haiku-4-5:
+        display_name: "Claude Haiku 4.5"
+        input:  0.0000008     # $0.80 per 1M tokens
+        output: 0.000004      # $4.00 per 1M tokens
+        context_window: 200000
+        notes: "High-volume / low-cost tasks"
+      claude-opus-4-6:
+        display_name: "Claude Opus 4.6"
+        input:  0.000015      # $15.00 per 1M tokens
+        output: 0.000075      # $75.00 per 1M tokens
+        context_window: 200000
+        notes: "Complex reasoning — use sparingly"
+
+  google:
+    display_name: "Google"
+    homepage: "https://ai.google.dev/pricing"
+    models:
+      gemini-2.0-flash:
+        display_name: "Gemini 2.0 Flash"
+        input:  0.000000375   # $0.375 per 1M tokens
+        output: 0.0000015     # $1.50 per 1M tokens
+        context_window: 1000000
+        notes: "Default ACMS pipeline model — best cost/quality ratio"
+      gemini-2.0-flash-lite:
+        display_name: "Gemini 2.0 Flash Lite"
+        input:  0.0000000750  # $0.075 per 1M tokens
+        output: 0.000000300   # $0.30 per 1M tokens
+        context_window: 1000000
+        notes: "Ultra-low-cost tasks"
+      gemini-2.5-pro:
+        display_name: "Gemini 2.5 Pro"
+        input:  0.00000125    # $1.25 per 1M tokens (<=200k)
+        output: 0.000010      # $10.00 per 1M tokens
+        context_window: 1000000
+        notes: "High-complexity tasks — check pricing tiers"
+
+  ollama:
+    display_name: "Ollama (local inference)"
+    homepage: "https://ollama.com"
+    models:
+      qwen3:8b:
+        display_name: "Qwen3 8B"
+        input:  0.000000000   # $0.00 — local inference
+        output: 0.000000000   # $0.00 — local inference
+        context_window: 32000
+        notes: "Default local model — FreedomTower RTX 5080"
+      llama3.3:70b:
+        display_name: "Llama 3.3 70B"
+        input:  0.000000000   # $0.00 — local inference
+        output: 0.000000000   # $0.00 — local inference
+        context_window: 128000
+        notes: "TheBeast dual RTX 5090 — high quality local"
+      qwen3:32b:
+        display_name: "Qwen3 32B"
+        input:  0.000000000
+        output: 0.000000000
+        context_window: 32000
+        notes: "TheBeast — mid-tier local"
+
+# ACMS pipeline defaults — what each component uses unless overridden
+defaults:
+  fabric_stitch:
+    vendor: google
+    model: gemini-2.0-flash
+  deploy_generators:
+    vendor: ollama
+    model: qwen3:8b
+  sync_skill:
+    vendor: ollama
+    model: qwen3:8b
+  langgraph_exc:
+    vendor: anthropic
+    model: claude-sonnet-4-6
+  marimo_monitor:
+    vendor: google
+    model: gemini-2.0-flash
+
+# Cost thresholds — alerts when a single run exceeds these
+thresholds:
+  warn:  0.05    # $0.05 — log warning
+  alert: 0.25   # $0.25 — log alert + notify
+  hard:  1.00   # $1.00 — abort run, require override flag
