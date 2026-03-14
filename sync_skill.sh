@@ -126,8 +126,8 @@ if [[ ! -f "$SOURCE_ABS" ]]; then
 fi
 
 # Check required sections
-for section in "Identity" "Mission"; do
-  if ! grep -q "^# $section" "$SOURCE_ABS"; then
+for section in "IDENTITY" "BEHAVIORAL CONTRACT"; do
+  if ! grep -qi "^# $section" "$SOURCE_ABS"; then
     echo -e "${RED}  ✗ Missing required section: # $section${RESET}"; exit 1
   fi
 done
@@ -320,20 +320,29 @@ rates_file, vendor, model, tokens_in, tokens_out = sys.argv[1:]
 tokens_in  = int(tokens_in)
 tokens_out = int(tokens_out)
 
-# Minimal YAML parser for flat key: value pairs (stdlib only)
+# YAML parser — colon-aware (handles model names like qwen3:8b)
 rates = {}
 try:
   with open(rates_file) as f:
     current_path = []
+    in_model_block = False
+    model_indent = -1
     for line in f:
       stripped = line.rstrip()
       if not stripped or stripped.startswith('#'):
         continue
+      # Strip inline comments before processing
+      if ' #' in stripped:
+        stripped = stripped[:stripped.index(' #')].rstrip()
       indent = len(line) - len(line.lstrip())
       depth  = indent // 2
-      if ':' in stripped:
-        key, _, val = stripped.lstrip().partition(':')
-        key = key.strip(); val = val.strip()
+      # Use first colon only for path keys — preserve colons in values
+      if ':' in stripped.lstrip():
+        lstripped = stripped.lstrip()
+        first_colon = lstripped.index(':')
+        key = lstripped[:first_colon].strip()
+        val = lstripped[first_colon+1:].strip()
+        # If val contains a colon it's a model name value — keep as-is
         current_path = current_path[:depth] + [key]
         if val:
           rates['.'.join(current_path)] = val
@@ -343,11 +352,12 @@ except Exception:
 in_key  = f"vendors.{vendor}.models.{model}.input"
 out_key = f"vendors.{vendor}.models.{model}.output"
 
+# Default to zero — ollama is local, unknown vendors assumed free
 try:
-  rate_in  = float(rates.get(in_key,  "0.000003"))
-  rate_out = float(rates.get(out_key, "0.000015"))
+  rate_in  = float(rates.get(in_key,  "0.0"))
+  rate_out = float(rates.get(out_key, "0.0"))
 except ValueError:
-  rate_in = 0.000003; rate_out = 0.000015
+  rate_in = 0.0; rate_out = 0.0
 
 cost = (tokens_in * rate_in) + (tokens_out * rate_out)
 print(f"{cost:.6f}")
@@ -393,6 +403,7 @@ if [[ "$DRY_RUN" == false ]]; then
 fi
 echo -e "  ⏱  $(($(date +%s%3N) - STEP_T))ms"
 
+STEPS_COMPLETED=$((STEPS_COMPLETED + 1))
 # ── Final summary ─────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}${GREEN}╔══════════════════════════════════════════════════════════╗${RESET}"
