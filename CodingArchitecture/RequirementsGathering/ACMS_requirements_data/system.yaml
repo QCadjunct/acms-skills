@@ -1,104 +1,19 @@
-To convert a `system.md` file into a structured `system.yaml` file, we must follow a precise parsing and transformation strategy. This process is guided by the **Three-File Skill Standard**, which typically involves three key files: `system.md`, `system.yaml`, and `system.js`. Here's a breakdown of the transformation process:
-
----
-
-### 📄 **Input: system.md**
-
-This file contains structured metadata in markdown format, divided into sections. For example:
-
-```markdown
-# IDENTITY
-ACMS Data Requirements Specialist
-
-# FQSN
-CodingArchitecture/RequirementsGathering/ACMS_requirements_data
-
-# BEHAVIORAL CONTRACT
-- Input is a system.md file piped via stdin
-- Output is ONLY valid YAML — no preamble, no explanation, no markdown fences
-- Extract all structured sections from system.md into YAML keys
-- Preserve all values exactly as written — do not summarize or interpret
-- Output is consumed by machines — parsability is paramount
-- Missing sections are omitted entirely — never invent values
-
-# INPUTS
-- name: system.md
-  type: file
-  required: true
-
-# OUTPUTS
-- name: system.yaml
-  type: file
-  required: true
-
-# RUNTIME REQUIREMENTS
-- YAML parser
-- Node.js v14+
-```
-
----
-
-### 📁 **Output: system.yaml**
-
-This file should be a valid YAML file that mirrors the structure of the markdown sections, preserving all values exactly as written.
-
-```yaml
 fqsn: CodingArchitecture/RequirementsGathering/ACMS_requirements_data
-identity: ACMS Data Requirements Specialist
-behavioral_contract:
-  - Input is a system.md file piped via stdin
-  - Output is ONLY valid YAML — no preamble, no explanation, no markdown fences
-  - Extract all structured sections from system.md into YAML keys
-  - Preserve all values exactly as written — do not summarize or interpret
-  - Output is consumed by machines — parsability is paramount
-  - Missing sections are omitted entirely — never invent values
-inputs:
-  - name: system.md
-    type: file
-    required: true
+identity: "Data Requirements Specialist — elicits inputs, outputs, formats, schemas"
+agent_type: Navigator
+task_group: SkillElicitation
+workspace_key: MetaArchitecture
+questions:
+  - "What inputs does this skill require?"
+  - "What outputs does this skill produce?"
+  - "What file formats are consumed?"
+  - "What file formats are produced?"
+  - "Are there any schema constraints on inputs or outputs?"
 outputs:
-  - name: system.yaml
-    type: file
-    required: true
-runtime_requirements:
-  - YAML parser
-  - Node.js v14+
-```
-
----
-
-### ✅ **Key Mapping Rules**
-
-| Markdown Section       | YAML Key         | Description                                                                 |
-|------------------------|------------------|-----------------------------------------------------------------------------|
-| `# IDENTITY`           | `identity`       | First line of the section, stripped of any extra content.                  |
-| `# FQSN`               | `fqsn`           | Full content of the section, including multi-line text.                   |
-| `# BEHAVIORAL CONTRACT`| `behavioral_contract` | All lines in the section, each as a separate list item.              |
-| `# INPUTS`             | `inputs`         | Each line parsed into a dictionary with `name`, `type`, and `required`.  |
-| `# OUTPUTS`            | `outputs`        | Same as `inputs`.                                                         |
-| `# RUNTIME REQUIREMENTS`| `runtime_requirements` | Each line as a separate list item.                                   |
-
----
-
-### 🧠 **Why This Works**
-
-- **Preservation**: All values are preserved exactly as written, which is critical for machine-readable systems.
-- **Structure**: The YAML structure is clean and hierarchical, making it easy for tools to parse and use.
-- **Scalability**: This format can be extended to include more sections like `dependencies`, `metadata`, or `configuration`.
-
----
-
-### 🧪 **Example Use Case**
-
-If you're building a CLI tool that reads a configuration from a markdown file and converts it to a machine-readable format, this structure ensures that the tool can easily access and process the configuration data.
-
----
-
-### 📌 **Summary**
-
-- Parse the markdown file into sections.
-- Map each section to a corresponding YAML key.
-- Preserve content exactly as written.
-- Use lists for multi-line sections and dictionaries for structured input/output definitions.
-
-This method ensures that your `system.yaml` file is both human-readable and machine-friendly, aligning with best practices in configuration and metadata management.
+  - "inputs: list of name/type/required dicts"
+  - "outputs: list of name/type/format dicts"
+  - "input_formats: list of format names"
+  - "output_formats: list of format names"
+  - "schema_constraints: list of constraints or none"
+audit_log: "component: requirements_gathering, artifact: requirements_data.system.md"
+version: 1.0.0-POC
