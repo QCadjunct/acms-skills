@@ -78,15 +78,37 @@ def main() -> int:
     if len(output_text) < 10 and tokens_out > 50:
         constraint_warnings.append("Output suspiciously short relative to token count")
 
-    # Write cost to cost_audit.log
+    # Write ADR-009 format cost entry to cost_audit.log
     COST_LOG.parent.mkdir(parents=True, exist_ok=True)
-    cost_entry = (
-        f"[{timestamp}] post_tool_call.py | skill={SKILL_NAME} | "
-        f"tool={tool_name} | tokens_in={tokens_in} | tokens_out={tokens_out} | "
-        f"cost=${cost:.6f} | exit_code={exit_code}\n"
+
+    # Read RUN_ID from pre-scratch if available
+    run_id = "unknown"
+    upstream_id = ""
+    try:
+        pre_data = json.loads(PRE_SCRATCH.read_text())
+        run_id = pre_data.get("run_id", "unknown")
+        upstream_id = pre_data.get("upstream_id", "")
+    except Exception:
+        pass
+
+    vendor = os.environ.get("ACMS_VENDOR", "ollama").lower()
+    model  = os.environ.get("ACMS_MODEL", "qwen3:8b")
+    env    = os.environ.get("ACMS_ENV", "dev")
+
+    cost_in  = tokens_in  * RATE_IN
+    cost_out = tokens_out * RATE_OUT
+    cost     = cost_in + cost_out
+
+    adr009_entry = (
+        f"[{timestamp}] | post_tool_call | {run_id} | {SKILL_FQSN} | "
+        f"hook.post_tool_call | {vendor} | {model} | "
+        f"{tokens_in} | {tokens_out} | "
+        f"{cost_in:.6f} | {cost_out:.6f} | {cost:.6f} | "
+        f"{elapsed_ms} | {env} | {upstream_id} | "
+        f"tool={tool_name} exit={exit_code}\n"
     )
     with open(COST_LOG, "a") as f:
-        f.write(cost_entry)
+        f.write(adr009_entry)
 
     # Write post scratch status
     status = {
