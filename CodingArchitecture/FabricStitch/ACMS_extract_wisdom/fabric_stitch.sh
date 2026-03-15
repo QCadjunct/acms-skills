@@ -22,9 +22,9 @@ mkdir -p "$BASE"
 
 # ── Multi-Model Configuration ─────────────────────────────────
 STEP1_MODEL="gemini-2.0-flash";         STEP1_VENDOR="Gemini"
-STEP2_MODEL="claude-sonnet-4-6"; STEP2_VENDOR="Anthropic"
+STEP2_MODEL="claude-sonnet-4-6";        STEP2_VENDOR="Anthropic"
 STEP3_MODEL="gemini-2.0-flash";         STEP3_VENDOR="Gemini"
-STEP4_MODEL="qwen3:8b";                 STEP4_VENDOR="Ollama"
+STEP4_MODEL="gemma3:12b";               STEP4_VENDOR="Ollama"
 
 # ── Vendor Cost Rates per 1M tokens ──────────────────────────
 declare -A INPUT_RATE=(
@@ -125,7 +125,7 @@ echo "Model assignments:"
 echo "  Step 1 extract_wisdom   : $STEP1_VENDOR|$STEP1_MODEL"
 echo "  Step 2 summarize        : $STEP2_VENDOR|$STEP2_MODEL"
 echo "  Step 3 extract_insights : $STEP3_VENDOR|$STEP3_MODEL"
-echo "  Step 4 create_tags      : $STEP4_VENDOR|$STEP4_MODEL"
+echo "  Step 4 synthesize       : $STEP4_VENDOR|$STEP4_MODEL (word_limit=3000)"
 echo "  Step 5 pandoc           : no LLM"
 echo "============================================================"
 
@@ -161,23 +161,51 @@ R3=$(step_end "$t" "${BASE}/01_wisdom.md" "${BASE}/03_insights.md" "$STEP3_VENDO
 DUR3=$(get_dur "$R3"); IN3=$(get_in "$R3"); OUT3=$(get_out "$R3"); COST3=$(get_cost "$R3")
 
 # ── Step 4 — Create Tags ──────────────────────────────────────
-t=$(step_start "Step 4/5" "create_tags" "$STEP4_VENDOR" "$STEP4_MODEL")
-cat "${BASE}/02_summary.md" | \
-    fabric --pattern create_tags \
-           --model "$STEP4_MODEL" \
-           --vendor "$STEP4_VENDOR" \
-           --output "${BASE}/04_tags.md"
-R4=$(step_end "$t" "${BASE}/02_summary.md" "${BASE}/04_tags.md" "$STEP4_VENDOR")
+t=$(step_start "Step 4/5" "synthesize_eloquent_narrative" "$STEP4_VENDOR" "$STEP4_MODEL")
+# Combine all prior outputs for synthesis — wisdom + summary + insights
+COMBINED="${BASE}/03_combined_for_synthesis.md"
+{
+  echo "word_limit=3000"
+  echo ""
+  echo "## Extracted Wisdom"
+  cat "${BASE}/01_wisdom.md"
+  echo ""
+  echo "## Summary"
+  cat "${BASE}/02_summary.md"
+  echo ""
+  echo "## Insights"
+  cat "${BASE}/03_insights.md"
+} > "$COMBINED"
+
+fabric --pattern synthesize_eloquent_narrative_from_wisdom \
+       --model "$STEP4_MODEL" \
+       --vendor "$STEP4_VENDOR" \
+       < "$COMBINED" \
+       --output "${BASE}/04_narrative.md"
+R4=$(step_end "$t" "$COMBINED" "${BASE}/04_narrative.md" "$STEP4_VENDOR")
 DUR4=$(get_dur "$R4"); IN4=$(get_in "$R4"); OUT4=$(get_out "$R4"); COST4=$(get_cost "$R4")
 
 # ── Step 5 — Pandoc Output Generation ─────────────────────────
 t=$(step_start "Step 5/5" "pandoc conversion" "none" "no LLM")
 
-cat "${BASE}/01_wisdom.md" \
-    "${BASE}/02_summary.md" \
-    "${BASE}/03_insights.md" \
-    "${BASE}/04_tags.md" \
-    > "${BASE}/00_full_report.md"
+# Use narrative as primary content — the synthesized document IS the report
+cat "${BASE}/04_narrative.md" > "${BASE}/00_full_report.md"
+# Append appendix with raw extractions
+{
+  echo ""
+  echo "---"
+  echo ""
+  echo "## Appendix: Raw Extractions"
+  echo ""
+  echo "### Extracted Wisdom"
+  cat "${BASE}/01_wisdom.md"
+  echo ""
+  echo "### Summary"
+  cat "${BASE}/02_summary.md"
+  echo ""
+  echo "### Insights"
+  cat "${BASE}/03_insights.md"
+} >> "${BASE}/00_full_report.md"
 
 pandoc "${BASE}/00_full_report.md" \
        -o "${BASE}/full_report.pdf" \
@@ -242,7 +270,7 @@ printf "  %-5s %-20s %-35s %8s %8s %8s %12s\n" \
     "3" "extract_insights" "${STEP3_VENDOR}|${STEP3_MODEL}" \
     "$DUR3" "$IN3" "$OUT3" "\$${COST3}"
 printf "  %-5s %-20s %-35s %8s %8s %8s %12s\n" \
-    "4" "create_tags" "${STEP4_VENDOR}|${STEP4_MODEL}" \
+    "4" "synthesize" "${STEP4_VENDOR}|${STEP4_MODEL}" \
     "$DUR4" "$IN4" "$OUT4" "\$${COST4}"
 printf "  %-5s %-20s %-35s %8s %8s %8s %12s\n" \
     "5" "pandoc" "no LLM" \
@@ -271,7 +299,7 @@ Step  Pattern           Vendor|Model                        ms      In      Out 
 1     extract_wisdom    ${STEP1_VENDOR}|${STEP1_MODEL}      ${DUR1}  ${IN1}  ${OUT1}  ${COST1}
 2     summarize         ${STEP2_VENDOR}|${STEP2_MODEL}      ${DUR2}  ${IN2}  ${OUT2}  ${COST2}
 3     extract_insights  ${STEP3_VENDOR}|${STEP3_MODEL}      ${DUR3}  ${IN3}  ${OUT3}  ${COST3}
-4     create_tags       ${STEP4_VENDOR}|${STEP4_MODEL}      ${DUR4}  ${IN4}  ${OUT4}  ${COST4}
+4     synthesize        ${STEP4_VENDOR}|${STEP4_MODEL}      ${DUR4}  ${IN4}  ${OUT4}  ${COST4}
 5     pandoc            no LLM                              ${DUR5}  -       -       -
 ------------------------------------------------------------
 Total input tokens  : ${total_in}
