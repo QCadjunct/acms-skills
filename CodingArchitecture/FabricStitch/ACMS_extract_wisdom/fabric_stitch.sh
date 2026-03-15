@@ -12,6 +12,7 @@
 
 URL=${1:?"ERROR: YouTube URL required as first argument"}
 OUTPUT_DIR=${2:-"$HOME/projects/acms-skills/FabricStitch/output"}
+WIN_OUTPUT_DIR="/mnt/c/Users/pheller/Documents/ACMS-Output"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BASE="${OUTPUT_DIR}/${TIMESTAMP}"
 AUDIT_LOG="$HOME/projects/acms-skills/FabricStitch/audit.log"
@@ -189,6 +190,17 @@ pandoc "${BASE}/00_full_report.md" \
        -o "${BASE}/full_report.docx" \
        --metadata title="ACMS Fabric Stitch Report" \
        && echo "  Done: full_report.docx"
+
+# Copy docx to Windows via WSL2 interop and launch Word
+mkdir -p "$WIN_OUTPUT_DIR"
+WIN_FILE="${WIN_OUTPUT_DIR}/ACMS_$(basename $BASE)_report.docx"
+cp "${BASE}/full_report.docx" "$WIN_FILE" 2>/dev/null && {
+  WIN_PATH=$(wslpath -w "$WIN_FILE" 2>/dev/null || echo "$WIN_FILE")
+  echo "  ✓ Windows copy: $WIN_PATH"
+  cmd.exe /c start winword.exe "$WIN_PATH" 2>/dev/null &&
+    echo "  ✓ Word launched" ||
+    echo "  ⚠ Word launch failed — open manually: $WIN_PATH"
+}
 
 pandoc "${BASE}/00_full_report.md" \
        -o "${BASE}/full_report.html" \
