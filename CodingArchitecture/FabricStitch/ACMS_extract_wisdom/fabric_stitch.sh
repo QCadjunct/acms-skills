@@ -324,11 +324,11 @@ case "$SOURCE_TYPE" in
              --output "${STAGING}/step-01-extracted-wisdom.md"
     ;;
   web)
-    fabric --url="$SOURCE_WEB" \
-           --pattern ACMS_extract_wisdom \
-           --model "$STEP1_MODEL" \
-           --vendor "$STEP1_VENDOR" \
-           --output "${STAGING}/step-01-extracted-wisdom.md"
+    curl -sL --max-time 30 "$SOURCE_WEB" 2>/dev/null | \
+      fabric --pattern ACMS_extract_wisdom \
+             --model "$STEP1_MODEL" \
+             --vendor "$STEP1_VENDOR" \
+             --output "${STAGING}/step-01-extracted-wisdom.md"
     ;;
   video)
     if command -v yt-dlp &>/dev/null; then
