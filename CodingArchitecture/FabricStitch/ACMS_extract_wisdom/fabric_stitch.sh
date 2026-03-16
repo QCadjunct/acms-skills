@@ -5,12 +5,25 @@
 # skill: CodingArchitecture/FabricStitch/ACMS_extract_wisdom
 #
 # Usage:
-#   ./fabric_stitch.sh <url> [--word-limit N] [--output-dir DIR]
+#   ./fabric_stitch.sh --url   <youtube_url>      [--word-limit N] [--output-dir DIR]
+#   ./fabric_stitch.sh --file  <path/to/file>     [--word-limit N] [--output-dir DIR]
+#   ./fabric_stitch.sh --web   <article_url>      [--word-limit N] [--output-dir DIR]
+#   ./fabric_stitch.sh --video <path/to/video>    [--word-limit N] [--output-dir DIR]
+#
+# Input sources:
+#   --url   YouTube URL    — uses fabric --youtube for transcript
+#   --file  Local file     — .md .txt .pdf .docx .html
+#   --web   Web article    — any URL (fetches via fabric --url or curl)
+#   --video Local video    — uses yt-dlp for transcript
 #
 # Examples:
-#   ./fabric_stitch.sh "https://youtube.com/watch?v=xxx"
-#   ./fabric_stitch.sh "https://youtube.com/watch?v=xxx" --word-limit 5000
-#   ./fabric_stitch.sh "https://youtube.com/watch?v=xxx" --word-limit 3000 --output-dir ~/my_output
+#   ./fabric_stitch.sh --url  "https://youtube.com/watch?v=xxx"
+#   ./fabric_stitch.sh --url  "https://youtube.com/watch?v=xxx" --word-limit 5000
+#   ./fabric_stitch.sh --file ~/Documents/article.md
+#   ./fabric_stitch.sh --file ~/Downloads/paper.pdf --word-limit 3000
+#   ./fabric_stitch.sh --web  "https://www.dailydoseofds.com/ai-agents-crash-course-part-1/"
+#   ./fabric_stitch.sh --web  "https://martinfowler.com/articles/hexagonal.html" --word-limit 5000
+#   ./fabric_stitch.sh --video ~/Videos/lecture.mp4 --word-limit 2000
 #
 # Output structure:
 #   output/YYYY/MM/YYYYMMDD-Title-Slug/
@@ -29,7 +42,11 @@
 set -euo pipefail
 
 # ── Argument Parsing ──────────────────────────────────────────
-URL=""
+SOURCE_URL=""      # YouTube URL
+SOURCE_FILE=""     # Local file path (.md .txt .pdf .docx .html)
+SOURCE_WEB=""      # Web article URL (any site)
+SOURCE_VIDEO=""    # Local video file
+SOURCE_TYPE=""     # youtube | file | web | video
 WORD_LIMIT=3000
 OUTPUT_BASE="$HOME/projects/acms-skills/FabricStitch/output"
 WIN_OUTPUT_DIR="/mnt/c/Users/pheller/Documents/ACMS-Output"
@@ -37,18 +54,45 @@ UV_PYTHON="$HOME/projects/acms-skills/.venv/bin/python3"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --word-limit)  WORD_LIMIT="$2"; shift 2 ;;
-    --output-dir)  OUTPUT_BASE="$2"; shift 2 ;;
+    --url)         SOURCE_URL="$2";   SOURCE_TYPE="youtube"; shift 2 ;;
+    --file)        SOURCE_FILE="$2";  SOURCE_TYPE="file";    shift 2 ;;
+    --web)         SOURCE_WEB="$2";   SOURCE_TYPE="web";     shift 2 ;;
+    --video)       SOURCE_VIDEO="$2"; SOURCE_TYPE="video";   shift 2 ;;
+    --word-limit)  WORD_LIMIT="$2";   shift 2 ;;
+    --output-dir)  OUTPUT_BASE="$2";  shift 2 ;;
     --*)           echo "Unknown flag: $1" >&2; exit 1 ;;
-    *)             URL="$1"; shift ;;
+    # Legacy: bare YouTube URL as positional arg
+    *)
+      if [[ "$1" == http* ]]; then
+        SOURCE_URL="$1"; SOURCE_TYPE="youtube"
+      fi
+      shift ;;
   esac
 done
 
-if [[ -z "$URL" ]]; then
-  echo "ERROR: URL required as first argument" >&2
-  echo "Usage: ./fabric_stitch.sh <url> [--word-limit N] [--output-dir DIR]" >&2
+# Validate — one source required
+if [[ -z "$SOURCE_TYPE" ]]; then
+  echo ""
+  echo "ERROR: Input source required"
+  echo ""
+  echo "  --url   <youtube_url>    YouTube video"
+  echo "  --file  <path>           Local file (.md .txt .pdf .docx .html)"
+  echo "  --web   <article_url>    Web article (any URL)"
+  echo "  --video <path>           Local video file"
+  echo ""
   exit 1
 fi
+
+[[ "$SOURCE_TYPE" == "file"  && ! -f "$SOURCE_FILE"  ]] && { echo "ERROR: File not found: $SOURCE_FILE" >&2;  exit 1; }
+[[ "$SOURCE_TYPE" == "video" && ! -f "$SOURCE_VIDEO" ]] && { echo "ERROR: Video not found: $SOURCE_VIDEO" >&2; exit 1; }
+
+# Unified source label for display and manifest
+case "$SOURCE_TYPE" in
+  youtube) SOURCE_LABEL="$SOURCE_URL"          ;;
+  file)    SOURCE_LABEL="file://$SOURCE_FILE"  ;;
+  web)     SOURCE_LABEL="$SOURCE_WEB"          ;;
+  video)   SOURCE_LABEL="file://$SOURCE_VIDEO" ;;
+esac
 
 # ── UUIDv7 Generator ──────────────────────────────────────────
 # UUIDv7 encodes millisecond timestamp — time-sortable and globally unique
@@ -129,15 +173,35 @@ print(f'{in_cost + out_cost:.6f}')
 " 2>/dev/null || echo "0.000000"
 }
 
-# ── YouTube title extraction via yt-dlp ──────────────────────
-# Gets the actual video title — more reliable than narrative H1
-# Falls back to narrative H1 if yt-dlp is unavailable
-get_video_title() {
-    local url=$1
+# ── Source title extraction ──────────────────────────────────
+# YouTube/video: yt-dlp for accurate title
+# File: filename without extension
+# Web: yt-dlp (many sites) or HTML <title> tag via curl
+get_source_title() {
+    local source_type=$1
+    local source=$2
     local title=""
-    if command -v yt-dlp &>/dev/null; then
-        title=$(yt-dlp --get-title "$url" 2>/dev/null | head -1)
-    fi
+    case "$source_type" in
+      youtube|video)
+        if command -v yt-dlp &>/dev/null; then
+          title=$(yt-dlp --get-title "$source" 2>/dev/null | head -1)
+        fi
+        if [[ -z "$title" && "$source_type" == "video" ]]; then
+          title=$(basename "$source" | sed "s/\.[^.]*$//")
+        fi
+        ;;
+      file)
+        title=$(basename "$source" | sed "s/\.[^.]*$//" | tr "-_" " ")
+        ;;
+      web)
+        if command -v yt-dlp &>/dev/null; then
+          title=$(yt-dlp --get-title "$source" 2>/dev/null | head -1)
+        fi
+        if [[ -z "$title" ]]; then
+          title=$(curl -sL --max-time 10 "$source" 2>/dev/null |             grep -o '<title>[^<]*</title>' |             sed "s/<[^>]*>//g" | head -1 |             sed "s/ *[-|].*$//")  # strip site name suffix after - or |
+        fi
+        ;;
+    esac
     echo "$title"
 }
 
@@ -219,7 +283,8 @@ echo "============================================================"
 echo "ACMS Fabric Stitching Pipeline v3"
 echo "Mind Over Metadata LLC — Peter Heller"
 echo "============================================================"
-echo "URL         : $URL"
+echo "Source      : $SOURCE_LABEL"
+echo "Type        : $SOURCE_TYPE"
 echo "Word limit  : $WORD_LIMIT"
 echo "Run ID (ADR): $RUN_ID"
 echo "Started     : $PIPELINE_START_TIME"
@@ -232,14 +297,49 @@ echo "  Step 4 synthesize       : $STEP4_VENDOR|$STEP4_MODEL (word_limit=$WORD_L
 echo "  Step 5 pandoc           : no LLM"
 echo "============================================================"
 
-# ── Step 1 — Extract Wisdom ───────────────────────────────────
-t=$(step_start "Step 1/5" "extract_wisdom" "$STEP1_VENDOR" "$STEP1_MODEL")
-fabric --youtube="$URL" \
-       --transcript \
-       --pattern extract_wisdom \
-       --model "$STEP1_MODEL" \
-       --vendor "$STEP1_VENDOR" \
-       --output "${STAGING}/step-01-extracted-wisdom.md"
+# ── Step 1 — Extract Wisdom (source-aware) ───────────────────
+t=$(step_start "Step 1/5" "extract_wisdom ($SOURCE_TYPE)" "$STEP1_VENDOR" "$STEP1_MODEL")
+
+case "$SOURCE_TYPE" in
+  youtube)
+    fabric --youtube="$SOURCE_URL" \
+           --transcript \
+           --pattern ACMS_extract_wisdom \
+           --model "$STEP1_MODEL" \
+           --vendor "$STEP1_VENDOR" \
+           --output "${STAGING}/step-01-extracted-wisdom.md"
+    ;;
+  file)
+    cat "$SOURCE_FILE" | \
+      fabric --pattern ACMS_extract_wisdom \
+             --model "$STEP1_MODEL" \
+             --vendor "$STEP1_VENDOR" \
+             --output "${STAGING}/step-01-extracted-wisdom.md"
+    ;;
+  web)
+    fabric --url="$SOURCE_WEB" \
+           --pattern ACMS_extract_wisdom \
+           --model "$STEP1_MODEL" \
+           --vendor "$STEP1_VENDOR" \
+           --output "${STAGING}/step-01-extracted-wisdom.md"
+    ;;
+  video)
+    if command -v yt-dlp &>/dev/null; then
+      yt-dlp --write-auto-sub --skip-download \
+             --sub-format vtt \
+             -o "${STAGING}/video_sub" \
+             "$SOURCE_VIDEO" 2>/dev/null
+      SUB_FILE=$(ls "${STAGING}/video_sub"*.vtt 2>/dev/null | head -1)
+      if [[ -f "$SUB_FILE" ]]; then
+        cat "$SUB_FILE" | sed "/^[0-9]*$/d;/^-->/d;/^WEBVTT/d;/^$/d" | \
+          fabric --pattern ACMS_extract_wisdom \
+                 --model "$STEP1_MODEL" \
+                 --vendor "$STEP1_VENDOR" \
+                 --output "${STAGING}/step-01-extracted-wisdom.md"
+      fi
+    fi
+    ;;
+esac
 R1=$(step_end "$t" "${STAGING}/step-01-extracted-wisdom.md" \
               "${STAGING}/step-01-extracted-wisdom.md" "$STEP1_VENDOR")
 DUR1=$(get_dur "$R1"); IN1=$(get_in "$R1"); OUT1=$(get_out "$R1"); COST1=$(get_cost "$R1")
@@ -293,7 +393,7 @@ R4=$(step_end "$t" "${STAGING}/step-05-combined-for-synthesis.md" \
 DUR4=$(get_dur "$R4"); IN4=$(get_in "$R4"); OUT4=$(get_out "$R4"); COST4=$(get_cost "$R4")
 
 # ── Extract title — prefer YouTube title over narrative H1 ────
-RAW_TITLE=$(get_video_title "$URL")
+RAW_TITLE=$(get_source_title "$SOURCE_TYPE" "${SOURCE_URL}${SOURCE_FILE}${SOURCE_WEB}${SOURCE_VIDEO}")
 if [[ -z "$RAW_TITLE" ]]; then
     RAW_TITLE=$(extract_title "${STAGING}/step-04-narrative.md")
 fi
@@ -324,14 +424,6 @@ FILE_BASE="${FILE_SLUG}-${TODAY}-${RUN_ID}"
 # Build full report: narrative + appendix
 REPORT_MD="${FINAL_DIR}/${FILE_BASE}.md"
 {
-  # Source attribution — Daniel Miessler's original thesis:
-  # read the synthesis to decide if the source is worth watching
-  echo "> **Source**: ${URL}"
-  echo ">"
-  echo "> *Synthesized by ACMS FabricStitch Pipeline — Mind Over Metadata LLC — $(date '+%Y-%m-%d')*"
-  echo ""
-  echo "---"
-  echo ""
   cat "${FINAL_DIR}/step-04-narrative.md"
   echo ""
   echo "---"
@@ -404,7 +496,7 @@ print(len(text.split()))
 cat > "${FINAL_DIR}/manifest.json" << MANIFEST
 {
   "title": "${RAW_TITLE}",
-  "source_url": "${URL}",
+  "source_url": "${SOURCE_LABEL}",
   "created_date": "$(date '+%Y-%m-%d')",
   "created_time": "$(date '+%H:%M:%S')",
 
