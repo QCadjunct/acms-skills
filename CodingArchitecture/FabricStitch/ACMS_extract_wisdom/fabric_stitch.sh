@@ -58,8 +58,9 @@ while [[ $# -gt 0 ]]; do
     --file)        SOURCE_FILE="$2";  SOURCE_TYPE="file";    shift 2 ;;
     --web)         SOURCE_WEB="$2";   SOURCE_TYPE="web";     shift 2 ;;
     --video)       SOURCE_VIDEO="$2"; SOURCE_TYPE="video";   shift 2 ;;
-    --word-limit)  WORD_LIMIT="$2";   shift 2 ;;
-    --output-dir)  OUTPUT_BASE="$2";  shift 2 ;;
+    --word-limit)         WORD_LIMIT="$2";         shift 2 ;;
+    --output-dir)         OUTPUT_BASE="$2";        shift 2 ;;
+    --synthesis-pattern)  SYNTHESIS_PATTERN="$2";  shift 2 ;;
     --*)           echo "Unknown flag: $1" >&2; exit 1 ;;
     # Legacy: bare YouTube URL as positional arg
     *)
@@ -132,6 +133,11 @@ STEP1_MODEL="gemini-2.5-flash";    STEP1_VENDOR="Gemini"
 STEP2_MODEL="claude-sonnet-4-5";   STEP2_VENDOR="Anthropic"
 STEP3_MODEL="gemini-2.5-flash";    STEP3_VENDOR="Gemini"
 STEP4_MODEL="claude-sonnet-4-5";   STEP4_VENDOR="Anthropic"
+
+# Step 4 synthesis pattern — override with --synthesis-pattern
+# article : synthesize_eloquent_narrative_from_wisdom (default)
+# guide   : synthesize_practical_guide_from_wisdom
+SYNTHESIS_PATTERN="synthesize_eloquent_narrative_from_wisdom"
 
 # ── Vendor Cost Rates per 1M tokens ──────────────────────────
 declare -A INPUT_RATE=(
@@ -294,6 +300,7 @@ echo "  Step 1 extract_wisdom   : $STEP1_VENDOR|$STEP1_MODEL"
 echo "  Step 2 summarize        : $STEP2_VENDOR|$STEP2_MODEL"
 echo "  Step 3 extract_insights : $STEP3_VENDOR|$STEP3_MODEL"
 echo "  Step 4 synthesize       : $STEP4_VENDOR|$STEP4_MODEL (word_limit=$WORD_LIMIT)"
+echo "  Step 4 pattern          : $SYNTHESIS_PATTERN"
 echo "  Step 5 pandoc           : no LLM"
 echo "============================================================"
 
@@ -367,7 +374,7 @@ R3=$(step_end "$t" "${STAGING}/step-01-extracted-wisdom.md" \
 DUR3=$(get_dur "$R3"); IN3=$(get_in "$R3"); OUT3=$(get_out "$R3"); COST3=$(get_cost "$R3")
 
 # ── Step 4 — Synthesize Narrative ────────────────────────────
-t=$(step_start "Step 4/5" "synthesize_eloquent_narrative" "$STEP4_VENDOR" "$STEP4_MODEL")
+t=$(step_start "Step 4/5" "$SYNTHESIS_PATTERN" "$STEP4_VENDOR" "$STEP4_MODEL")
 
 # Combine all prior outputs — wisdom + summary + insights
 {
@@ -383,7 +390,7 @@ t=$(step_start "Step 4/5" "synthesize_eloquent_narrative" "$STEP4_VENDOR" "$STEP
   cat "${STAGING}/step-03-insights.md"
 } > "${STAGING}/step-05-combined-for-synthesis.md"
 
-fabric --pattern synthesize_eloquent_narrative_from_wisdom \
+fabric --pattern "$SYNTHESIS_PATTERN" \
        --model "$STEP4_MODEL" \
        --vendor "$STEP4_VENDOR" \
        < "${STAGING}/step-05-combined-for-synthesis.md" \
