@@ -178,11 +178,19 @@ def run_part(part_num: str, title: str, url: str,
             "cost_usd": 0,
         }
 
+    # Guide format uses the practical guide pattern — article uses narrative
+    synthesis_pattern = (
+        "synthesize_practical_guide_from_wisdom"
+        if fmt in ("repo", "obsidian", "both")
+        else "synthesize_eloquent_narrative_from_wisdom"
+    )
+
     cmd = [
         "bash", str(FABRIC_STITCH),
         "--web", url,
         "--word-limit", str(word_limit),
         "--output-dir", str(output_dir),
+        "--synthesis-pattern", synthesis_pattern,
     ]
 
     try:
