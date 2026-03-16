@@ -178,15 +178,13 @@ def run_part(part_num: str, title: str, url: str,
             "cost_usd": 0,
         }
 
-    # Course pipeline always produces guides — structured reference material
-    synthesis_pattern = "synthesize_practical_guide_from_wisdom"
-
+    # Course pipeline always uses step-by-step guide pattern
     cmd = [
         "bash", str(FABRIC_STITCH),
         "--web", url,
         "--word-limit", str(word_limit),
         "--output-dir", str(output_dir),
-        "--synthesis-pattern", synthesis_pattern,
+        "--synthesis-pattern", "synthesize_stepbystep_guide_from_wisdom",
     ]
 
     try:
