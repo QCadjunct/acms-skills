@@ -184,7 +184,6 @@ def run_part(part_num: str, title: str, url: str,
         "--web", url,
         "--word-limit", str(word_limit),
         "--output-dir", str(output_dir),
-        "--synthesis-pattern", "synthesize_stepbystep_guide_from_wisdom",
     ]
 
     try:
