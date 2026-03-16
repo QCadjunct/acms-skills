@@ -201,7 +201,7 @@ echo "============================================================"
 t=$(step_start "Step 1/5" "extract_wisdom" "$STEP1_VENDOR" "$STEP1_MODEL")
 fabric --youtube="$URL" \
        --transcript \
-       --pattern ACMS_extract_wisdom \
+       --pattern extract_wisdom \
        --model "$STEP1_MODEL" \
        --vendor "$STEP1_VENDOR" \
        --output "${STAGING}/step-01-extracted-wisdom.md"
