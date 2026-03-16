@@ -214,18 +214,27 @@ generate_artifact() {
   if [[ "$DRY_RUN" == false ]]; then
     if command -v fabric &>/dev/null; then
       fabric --pattern "$transformer" < "$SOURCE_ABS" > "$SKILL_DIR/$output_file"
-      # Strip markdown fences if transformer wrapped output in ```yaml or ```
+      # Strip preamble, markdown fences, --- separators, explanation text
       python3 -c "
-import sys
-p = '$SKILL_DIR/$output_file'
-lines = open(p).read().splitlines()
-if lines and lines[0].strip().startswith('\`\`\`'):
-    lines = lines[1:]
-if lines and lines[-1].strip() == '\`\`\`':
-    lines = lines[:-1]
-open(p, 'w').write('
-'.join(lines) + '
-')
+from pathlib import Path
+p = Path('$SKILL_DIR/$output_file')
+lines = p.read_text().splitlines()
+# Find first real content line (yaml starts with identity:, toon with !skill)
+start = 0
+for i, l in enumerate(lines):
+    s = l.strip()
+    if s.startswith('identity:') or s.startswith('!skill'):
+        start = i
+        break
+lines = lines[start:]
+# Stop at --- document separator or explanation text
+clean = []
+for l in lines:
+    s = l.strip()
+    if s == '---': break
+    if s.startswith('\`\`\`'): continue
+    clean.append(l)
+p.write_text('\n'.join(clean).rstrip() + '\n')
 " 2>/dev/null || true
       echo -e "${GREEN}  ✓ $label generated${RESET}"
     else
