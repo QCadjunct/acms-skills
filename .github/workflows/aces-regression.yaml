@@ -1,0 +1,339 @@
+# .github/workflows/aces-regression.yaml
+#
+# ACES — Five-Layer Regression Pipeline
+# GitHub Actions — identical syntax to Forgejo Actions
+# © 2026 Mind Over Metadata LLC
+#
+# Runs on:
+#   - Every push to any branch
+#   - Every pull request targeting main
+#   - Layers 1-4: FreedomTower self-hosted runner
+#   - Layer 5: TheBeast self-hosted runner (main branch only)
+#
+# ADR-023: GitHub private repo as CI/CD mirror
+# ADR-022: Cookiecutter scaffold compliance validated here
+# ADR-020: system.md purity rule enforced in Layer 3
+# ADR-018: Forward declarations validated in Layer 4
+
+name: ACES Regression Suite
+
+on:
+  push:
+    branches: [ main, develop, 'feature/**', 'adr/**' ]
+  pull_request:
+    branches: [ main ]
+
+# Cancel in-progress runs on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.12'
+  UV_VERSION: '0.4.0'
+
+jobs:
+
+  # ═══════════════════════════════════════════════
+  # LAYER 1 — YAML Schema Validation
+  # Validates: application.yaml, group.yaml, task.yaml
+  # ADR-016: FastAPI + Celery schema present
+  # ADR-017: queue and routing_key declared
+  # ADR-018: forwards declared, next: deprecated
+  # ADR-020: runtime, interface, substitutable in group.yaml
+  # ADR-021: deployment block uses capability labels not node names
+  # ═══════════════════════════════════════════════
+  layer-1-yaml-schema:
+    name: "L1 — YAML Schema Validation"
+    runs-on: self-hosted
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh && echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Validate application.yaml schemas
+        run: uv run python -m pytest tests/test_yaml_schema.py::test_application_yaml -v --tb=short
+
+      - name: Validate group.yaml schemas
+        run: uv run python -m pytest tests/test_yaml_schema.py::test_group_yaml -v --tb=short
+
+      - name: Validate task.yaml schemas
+        run: uv run python -m pytest tests/test_yaml_schema.py::test_task_yaml -v --tb=short
+
+      - name: Validate FQSN taxonomy compliance
+        run: uv run python -m pytest tests/test_yaml_schema.py::test_fqsn_taxonomy -v --tb=short
+
+      - name: Validate ADR-017 queue declarations
+        run: uv run python -m pytest tests/test_yaml_schema.py::test_queue_declarations -v --tb=short
+
+      - name: Validate ADR-021 capability labels not node names
+        run: uv run python -m pytest tests/test_yaml_schema.py::test_capability_labels -v --tb=short
+
+      - name: Log result to transaction log
+        if: always()
+        run: |
+          echo "$(date +%H:%M) | CI-${{ job.status }} | ${{ github.repository }} | ${{ github.ref_name }} | L1 YAML Schema" >> ~/git-transaction-log.txt
+
+  # ═══════════════════════════════════════════════
+  # LAYER 2 — Pydantic V2 Model Validation
+  # Validates: workspace models, trifecta serialization
+  # model_dump_tool() → TOON
+  # model_dump_to_yaml() → system.yaml
+  # model_dump_to_md() → system.md
+  # save_trifecta() → all three atomically
+  # ═══════════════════════════════════════════════
+  layer-2-pydantic-models:
+    name: "L2 — Pydantic V2 Model Validation"
+    runs-on: self-hosted
+    needs: layer-1-yaml-schema
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh && echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Validate workspace models
+        run: uv run python -m pytest tests/test_pydantic_models.py::test_workspace_models -v --tb=short
+
+      - name: Validate model_dump_tool TOON serialization
+        run: uv run python -m pytest tests/test_pydantic_models.py::test_toon_serialization -v --tb=short
+
+      - name: Validate model_dump_to_yaml serialization
+        run: uv run python -m pytest tests/test_pydantic_models.py::test_yaml_serialization -v --tb=short
+
+      - name: Validate save_trifecta atomic write
+        run: uv run python -m pytest tests/test_pydantic_models.py::test_trifecta_atomic -v --tb=short
+
+      - name: Validate load_from_yaml round-trip
+        run: uv run python -m pytest tests/test_pydantic_models.py::test_yaml_roundtrip -v --tb=short
+
+      - name: Validate TOON token reduction target (≥15%)
+        run: uv run python -m pytest tests/test_pydantic_models.py::test_toon_reduction -v --tb=short
+
+      - name: Log result to transaction log
+        if: always()
+        run: |
+          echo "$(date +%H:%M) | CI-${{ job.status }} | ${{ github.repository }} | ${{ github.ref_name }} | L2 Pydantic Models" >> ~/git-transaction-log.txt
+
+  # ═══════════════════════════════════════════════
+  # LAYER 3 — Behavioral Contract Validation
+  # The system.md Purity Rule (ADR-020):
+  #   system.md contains behavioral declarations ONLY
+  #   No plumbing fields: runtime, interface, substitutable
+  #   These belong in group.yaml
+  # Also validates: FQSN frontmatter, copyright, type field
+  # ═══════════════════════════════════════════════
+  layer-3-behavioral-contracts:
+    name: "L3 — Behavioral Contract Validation"
+    runs-on: self-hosted
+    needs: layer-2-pydantic-models
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh && echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Validate system.md purity — no plumbing fields (ADR-020)
+        run: uv run python -m pytest tests/test_system_md.py::test_no_plumbing_fields -v --tb=short
+
+      - name: Validate system.md required frontmatter
+        run: uv run python -m pytest tests/test_system_md.py::test_required_frontmatter -v --tb=short
+
+      - name: Validate system.md FQSN path compliance
+        run: uv run python -m pytest tests/test_system_md.py::test_fqsn_path -v --tb=short
+
+      - name: Validate system.md copyright presence
+        run: uv run python -m pytest tests/test_system_md.py::test_copyright -v --tb=short
+
+      - name: Validate system.md behavioral rules section
+        run: uv run python -m pytest tests/test_system_md.py::test_behavioral_rules -v --tb=short
+
+      - name: Log result to transaction log
+        if: always()
+        run: |
+          echo "$(date +%H:%M) | CI-${{ job.status }} | ${{ github.repository }} | ${{ github.ref_name }} | L3 Behavioral Contracts" >> ~/git-transaction-log.txt
+
+  # ═══════════════════════════════════════════════
+  # LAYER 4 — Task Execution Regression
+  # Validates: FastAPI + Celery dispatch (ADR-016)
+  # Forward declarations routing (ADR-018)
+  # SQLite3 broker — development profile
+  # State persistence via SQLite3 checkpointer
+  # Named queue routing (ADR-017)
+  # ═══════════════════════════════════════════════
+  layer-4-task-execution:
+    name: "L4 — Task Execution Regression"
+    runs-on: self-hosted
+    needs: layer-3-behavioral-contracts
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh && echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Start SQLite3 Celery broker (development profile)
+        run: |
+          uv run celery -A aces.worker worker \
+            --broker=sqlite:///aces-test.db \
+            --loglevel=warning \
+            --detach \
+            --pidfile=/tmp/aces-celery.pid \
+            --logfile=/tmp/aces-celery.log
+          sleep 3
+
+      - name: Validate FastAPI task submission endpoint
+        run: uv run python -m pytest tests/test_task_execution.py::test_fastapi_submission -v --tb=short
+
+      - name: Validate Celery task dispatch to worker
+        run: uv run python -m pytest tests/test_task_execution.py::test_celery_dispatch -v --tb=short
+
+      - name: Validate forward declarations — success route
+        run: uv run python -m pytest tests/test_task_execution.py::test_forward_success -v --tb=short
+
+      - name: Validate forward declarations — failure route
+        run: uv run python -m pytest tests/test_task_execution.py::test_forward_failure -v --tb=short
+
+      - name: Validate forward declarations — custom named routes (ADR-018)
+        run: uv run python -m pytest tests/test_task_execution.py::test_forward_custom -v --tb=short
+
+      - name: Validate state persistence via SQLite3 checkpoint
+        run: uv run python -m pytest tests/test_task_execution.py::test_state_persistence -v --tb=short
+
+      - name: Validate named queue routing (ADR-017)
+        run: uv run python -m pytest tests/test_task_execution.py::test_queue_routing -v --tb=short
+
+      - name: Stop Celery worker
+        if: always()
+        run: |
+          if [ -f /tmp/aces-celery.pid ]; then
+            kill $(cat /tmp/aces-celery.pid) 2>/dev/null || true
+            rm /tmp/aces-celery.pid
+          fi
+
+      - name: Log result to transaction log
+        if: always()
+        run: |
+          echo "$(date +%H:%M) | CI-${{ job.status }} | ${{ github.repository }} | ${{ github.ref_name }} | L4 Task Execution" >> ~/git-transaction-log.txt
+
+  # ═══════════════════════════════════════════════
+  # LAYER 5 — Distributed Regression
+  # Runs on: TheBeast self-hosted runner (GPU available)
+  # Runs only on: main branch merges
+  # Profile: staging (PostgreSQL broker on Synology)
+  # Validates: multi-node execution, PostgreSQL checkpoint
+  # ═══════════════════════════════════════════════
+  layer-5-distributed:
+    name: "L5 — Distributed Execution (TheBeast)"
+    runs-on: self-hosted-beast
+    needs: layer-4-task-execution
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/main'
+
+    env:
+      ACES_PROFILE: staging
+      ACES_BROKER: ${{ secrets.SYNOLOGY_POSTGRES_BROKER }}
+      ACES_CHECKPOINT: ${{ secrets.SYNOLOGY_POSTGRES_CHECKPOINT }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh && echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Verify Synology PostgreSQL broker reachable via Tailscale
+        run: uv run python -m pytest tests/test_distributed.py::test_broker_connectivity -v --tb=short
+
+      - name: Validate distributed task dispatch (FreedomTower → TheBeast)
+        run: uv run python -m pytest tests/test_distributed.py::test_cross_node_dispatch -v --tb=short
+
+      - name: Validate PostgreSQL state persistence across nodes
+        run: uv run python -m pytest tests/test_distributed.py::test_distributed_checkpoint -v --tb=short
+
+      - name: Validate GPU agent routing to TheBeast queue
+        run: uv run python -m pytest tests/test_distributed.py::test_gpu_queue_routing -v --tb=short
+
+      - name: Validate failover — FreedomTower fallback queue
+        run: uv run python -m pytest tests/test_distributed.py::test_failover_routing -v --tb=short
+
+      - name: Log result to transaction log
+        if: always()
+        run: |
+          echo "$(date +%H:%M) | CI-${{ job.status }} | ${{ github.repository }} | ${{ github.ref_name }} | L5 Distributed (TheBeast)" >> ~/git-transaction-log.txt
+
+  # ═══════════════════════════════════════════════
+  # TRANSACTION LOG SYNC
+  # Appends today's CI events to the daily transaction log
+  # Syncs to NavigatorDiary vault via Tailscale
+  # Runs after all layers — success or failure
+  # ADR-023: Git transaction log as DECdtm audit trail
+  # ═══════════════════════════════════════════════
+  transaction-log-sync:
+    name: "Sync Transaction Log"
+    runs-on: self-hosted
+    needs: [ layer-1-yaml-schema, layer-2-pydantic-models, layer-3-behavioral-contracts, layer-4-task-execution ]
+    if: always()
+
+    steps:
+      - name: Append pipeline summary to daily transaction log
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          TIME=$(date +%H:%M)
+          LOG_DIR="$HOME/git-transaction-logs"
+          mkdir -p "$LOG_DIR"
+          LOG_FILE="$LOG_DIR/$DATE-Git-Transaction-Log.md"
+
+          # Initialize log file if new day
+          if [ ! -f "$LOG_FILE" ]; then
+            echo "# Git Transaction Log — $DATE" > "$LOG_FILE"
+            echo "" >> "$LOG_FILE"
+            echo "| Time | Event | Repo | Branch | Detail |" >> "$LOG_FILE"
+            echo "|------|-------|------|--------|--------|" >> "$LOG_FILE"
+          fi
+
+          # Append pipeline summary
+          echo "| $TIME | PIPELINE | ${{ github.repository }} | ${{ github.ref_name }} | L1=${{ needs.layer-1-yaml-schema.result }} L2=${{ needs.layer-2-pydantic-models.result }} L3=${{ needs.layer-3-behavioral-contracts.result }} L4=${{ needs.layer-4-task-execution.result }} |" >> "$LOG_FILE"
+
+      - name: Copy transaction log to Obsidian vault (NavigatorDiary)
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          YEAR=$(date +%Y)
+          MONTH=$(date +%m)
+          LOG_DIR="$HOME/git-transaction-logs"
+          VAULT_DIR="/mnt/c/Users/pheller/Documents/Obsidian Vault/NavigatorDiary/07-Infrastructure/Home-MaaS-Cluster/Git-Transaction-Logs/$YEAR/$MONTH"
+          mkdir -p "$VAULT_DIR"
+          cp "$LOG_DIR/$DATE-Git-Transaction-Log.md" "$VAULT_DIR/" 2>/dev/null || true
+          echo "Transaction log synced to NavigatorDiary ✅"

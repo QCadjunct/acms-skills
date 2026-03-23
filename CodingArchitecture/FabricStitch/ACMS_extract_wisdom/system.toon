@@ -1,12 +1,19 @@
-n:ACMS_extract_wisdom
-v:1.0.0
-d:CodingArchitecture
-sd:FabricStitch
-fq:CodingArchitecture/FabricStitch/ACMS_extract_wisdom
-m:"Input source is a parameter: YouTube URL, file path, or stdin. Each pipeline step binds to an independently configured LLM vendor. Vendor assignments are defined in system.yaml. Token counts and cost estimates are calculated per step. All executions are recorded in audit.log. Output formats: md, pdf, docx, html."
-p:"You are an ACMS Fabric Stitching Pipeline agent for Mind Over Metadata LLC."
-t:technical-precise
-tl:[extract_wisdom,summarize,extract_insights,create_tags,pandoc]
-cx:[Token counts and cost estimates are calculated per step,All executions are recorded in audit.log]
-h:[none]
-tc:"Appends to audit.log on every execution."
+{
+  "n": "ACMS_extract_wisdom",
+  "v": "1.0.0",
+  "d": "CodingArchitecture",
+  "sd": "FabricStitch",
+  "fq": "CodingArchitecture/FabricStitch/ACMS_extract_wisdom",
+  "m": "Extract distilled wisdom, insights, and recommendations from any text input using a multi-vendor Fabric pattern stitching pipeline governed by the Spec-Driven Development (SDD) methodology.",
+  "p": "ACMS Fabric Stitching Pipeline agent for Mind Over Metadata LLC.",
+  "t": "technical-precise",
+  "tl": ["extract_wisdom", "summarize", "extract_insights", "create_tags", "pandoc"],
+  "cx": [
+    "Each pipeline step binds to an independently configured LLM vendor",
+    "Vendor assignments are defined in system.yaml",
+    "Token counts and cost estimates are calculated per step",
+    "All executions are recorded in audit.log",
+    "Output formats: md, pdf, docx, html"
+  ],
+  "h": ["audit.log"]
+}

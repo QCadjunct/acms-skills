@@ -449,7 +449,7 @@ vendor_rates.yaml  (single source of truth)
 ## 10. Updated Taxonomy
 
 ```
-acms-skills/
+aces-skills/
 ├── MetaArchitecture/
 │   ├── ACMS_skill_deployers/                    ← existing
 │   ├── ACMS_skill_generators/                   ← existing (transformers)
@@ -537,7 +537,7 @@ Office eCO, Mind Over Metadata LLC as claimant.
 | 🔄 sync_skill | [[sync_skill-Component]] |
 | 🔄 D⁴ Methodology | [[02-D4-MOC]] |
 | 🔄 TOON | [[TOON-Serialization]] |
-| 🌐 acms-skills repo | https://github.com/QCadjunct/acms-skills |
+| 🌐 aces-skills repo | https://github.com/QCadjunct/aces-skills |
 
 ---
 

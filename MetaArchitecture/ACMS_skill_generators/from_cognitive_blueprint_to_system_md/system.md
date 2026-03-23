@@ -23,7 +23,7 @@ convergent frameworks:
 - Author: Peter Heller
 - Organization: Mind Over Metadata LLC
 - Methodology: D⁴ MDLC (Domain-Driven Database Design Metadata-Driven Lifecycle)
-- Repository: github.com/QCadjunct/acms-skills
+- Repository: github.com/QCadjunct/aces-skills
 
 Both frameworks independently arrived at the same core insight: agent behavior
 should be governed by a portable, declarative specification — not hardcoded
@@ -126,7 +126,7 @@ Source repo:      github.com/Marktechpost/AI-Tutorial-Codes-Included
 
 Target framework: ACMS Three-File Skill Standard
 Target author:    Peter Heller, Mind Over Metadata LLC
-Target repo:      github.com/QCadjunct/acms-skills
+Target repo:      github.com/QCadjunct/aces-skills
 
 Migration date:   [MIGRATION_DATE]
 Migration tool:   fabric --pattern from_cognitive_blueprint_to_system_md

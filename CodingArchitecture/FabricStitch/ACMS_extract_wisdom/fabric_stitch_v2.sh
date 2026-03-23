@@ -11,12 +11,12 @@
 # ============================================================
 
 URL=${1:?"ERROR: YouTube URL required as first argument"}
-OUTPUT_DIR=${2:-"$HOME/projects/acms-skills/FabricStitch/output"}
+OUTPUT_DIR=${2:-"$HOME/projects/aces-skills/FabricStitch/output"}
 WIN_OUTPUT_DIR="/mnt/c/Users/pheller/Documents/ACMS-Output"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BASE="${OUTPUT_DIR}/${TIMESTAMP}"
-AUDIT_LOG="$HOME/projects/acms-skills/FabricStitch/audit.log"
-UV_PYTHON="$HOME/projects/acms-skills/.venv/bin/python3"
+AUDIT_LOG="$HOME/projects/aces-skills/FabricStitch/audit.log"
+UV_PYTHON="$HOME/projects/aces-skills/.venv/bin/python3"
 
 mkdir -p "$BASE"
 

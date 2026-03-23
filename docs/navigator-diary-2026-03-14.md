@@ -29,7 +29,7 @@ Same ADR-009 upgrade applied to the deploy generators script. 5 per-artifact ent
 Patched post_tool_call.py and task_complete.py to write ADR-009 format. post_tool_call reads RUN_ID from pre-scratch JSON. task_complete adds session.total entry aggregating all per-artifact costs and displays per-artifact cost breakdown in the completion receipt. compute_session_cost() upgraded from legacy regex to ADR-009 pipe-delimited parser with backward compatibility.
 
 ### Step 6 — acms_monitor.py — 🧬 D⁴ MDLC Tab
-Added a seventh tab to the Marimo monitor reading live from cost_audit.log via WSL2 UNC path. Seven accordions: KPIs + Filters, Cost by Artifact Tier (the full tier_0→tier_4 chain), Cost by Artifact (Three-File Standard), Cost by Vendor/Model, Cost by Skill (FQSN), Bloat Detection (Boris Cherney callout), TOON Efficiency comparison. First tab in the monitor showing real production data — all other tabs still run on deterministic mock data pending PostgreSQL. Survived BOM stripping, em-dash removal, and triple-quote restoration before launching cleanly. Committed 80f01df to acms-repo main.
+Added a seventh tab to the Marimo monitor reading live from cost_audit.log via WSL2 UNC path. Seven accordions: KPIs + Filters, Cost by Artifact Tier (the full tier_0→tier_4 chain), Cost by Artifact (Three-File Standard), Cost by Vendor/Model, Cost by Skill (FQSN), Bloat Detection (Boris Cherney callout), TOON Efficiency comparison. First tab in the monitor showing real production data — all other tabs still run on deterministic mock data pending PostgreSQL. Survived BOM stripping, em-dash removal, and triple-quote restoration before launching cleanly. Committed 80f01df to aces-repo main.
 
 ### Step 7 — PrincipalSystemArchitect system.md
 Authored the meta-contract: the only ACMS skill whose tools are other skills. 182 lines, 6-step elicitation sequence, completeness scoring (0-6), Boris Cherney exemption for MetaArchitecture skills, ACMS framework mapping (task-call-task at the meta level), POC-V1.0 status with refinement gate. system.yaml required manual YAML repair post-transformer — documented as known POC limitation of the local transformer quality.
@@ -68,7 +68,7 @@ Built demo_preflight.sh: 50 checks across 8 categories. Required three fix itera
 
 ---
 
-## Commits Today (acms-skills master)
+## Commits Today (aces-skills master)
 
 | Hash | Description |
 |------|-------------|
@@ -85,7 +85,7 @@ Built demo_preflight.sh: 50 checks across 8 categories. Required three fix itera
 | 8cb541a | fix: sync_skill default gemma3:12b |
 | f20ee6d | fix: add gemma3:12b to vendor_rates.yaml |
 
-acms-repo main: 80f01df (D⁴ MDLC tab), 209e3c9 (launcher scripts)
+aces-repo main: 80f01df (D⁴ MDLC tab), 209e3c9 (launcher scripts)
 
 ---
 
@@ -106,7 +106,7 @@ acms-repo main: 80f01df (D⁴ MDLC tab), 209e3c9 (launcher scripts)
 
 ```
 50/50 checks passed — 0 warnings — 0 failures
-Repo: github.com/QCadjunct/acms-skills @ 658715b
+Repo: github.com/QCadjunct/aces-skills @ 658715b
 Demo: bash demo/demo_run.sh (WSL2) + demo_04_monitor.ps1 (Windows)
 Estimated duration: 15-20 minutes
 ```

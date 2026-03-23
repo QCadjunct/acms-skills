@@ -63,7 +63,7 @@ prod → ~/.config/fabric/patterns/{skill_name}/
 ╚══════════════════════════════════════════════════════════╝
 Skill:    ACMS_extract_wisdom
 Domain:   CodingArchitecture
-Source:   /home/pheller/projects/acms-skills/CodingArchitecture/FabricStitch/ACMS_extract_wisdom/system.md
+Source:   /home/pheller/projects/aces-skills/CodingArchitecture/FabricStitch/ACMS_extract_wisdom/system.md
 Env:      dev → /home/pheller/.config/fabric/patterns_custom
 Generate: all
 

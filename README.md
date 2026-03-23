@@ -1,4 +1,4 @@
-# acms-skills
+# aces-skills
 
 **ACMS Skill Repository — Mind Over Metadata LLC**  
 Peter Heller · [mindovermetadata.com](https://mindovermetadata.com) · [@QCadjunct](https://github.com/QCadjunct)
@@ -24,7 +24,7 @@ Every skill in this repo is a directory containing exactly three files:
 ## Taxonomy
 
 ```
-acms-skills/
+aces-skills/
 ├── MetaArchitecture/               ← abstract class: defines the contract
 │   └── ACMS_skill_deployers/
 │       └── ACMS_skill_deploy_generators/
@@ -137,7 +137,7 @@ PROD     patterns/ACMS_extract_wisdom/
 
 | Repo | Description |
 |------|-------------|
-| [QCadjunct/acms-repo](https://github.com/QCadjunct/acms-repo) | LangGraph execution controller, Marimo monitor, Pydantic V2 data model |
+| [QCadjunct/aces-repo](https://github.com/QCadjunct/aces-repo) | LangGraph execution controller, Marimo monitor, Pydantic V2 data model |
 | [QCadjunct/pydantic-v2-essentials](https://github.com/QCadjunct/pydantic-v2-essentials) | TOON implementation — `model_dump_tool()` |
 
 ---

@@ -104,8 +104,8 @@ COURSES = {
 }
 
 # ── Config ────────────────────────────────────────────────────
-FABRIC_STITCH = Path.home() / "projects/acms-skills/CodingArchitecture/FabricStitch/ACMS_extract_wisdom/fabric_course_stitch.sh"
-OUTPUT_BASE   = Path.home() / "projects/acms-skills/FabricStitch/output"
+FABRIC_STITCH = Path.home() / "projects/aces-skills/CodingArchitecture/FabricStitch/ACMS_extract_wisdom/fabric_course_stitch.sh"
+OUTPUT_BASE   = Path.home() / "projects/aces-skills/FabricStitch/output"
 
 # ── Helpers ───────────────────────────────────────────────────
 def banner(text: str, width: int = 60):

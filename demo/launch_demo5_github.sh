@@ -3,7 +3,7 @@
 # ACMS Demo Step 05 — open GitHub repos in browser.
 # Architecture Standard: Mind Over Metadata LLC — Peter Heller
 #
-# Opens both repos in sequence — acms-skills first, then acms-langgraph-poc.
+# Opens both repos in sequence — aces-skills first, then acms-langgraph-poc.
 #
 # Usage:
 #   ./launch_demo5_github.sh
@@ -17,7 +17,7 @@ DIM='\033[2m'
 RESET='\033[0m'
 BOLD='\033[1m'
 
-SKILLS_URL="https://github.com/QCadjunct/acms-skills"
+SKILLS_URL="https://github.com/QCadjunct/aces-skills"
 POC_URL="https://github.com/QCadjunct/acms-langgraph-poc"
 
 echo ""
@@ -40,7 +40,7 @@ echo ""
 echo -e "  ${DIM}──────────────────────────────────────────────────${RESET}"
 echo ""
 
-echo -e "  ${GREEN}→${RESET}  Opening acms-skills..."
+echo -e "  ${GREEN}→${RESET}  Opening aces-skills..."
 explorer.exe "$SKILLS_URL"
 sleep 1
 echo -e "  ${GREEN}→${RESET}  Opening acms-langgraph-poc..."

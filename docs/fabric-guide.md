@@ -1,6 +1,6 @@
 # Fabric CLI — Comprehensive Options Guide
 
-> **Repository**: `acms-skills/docs/fabric-guide.md`  
+> **Repository**: `aces-skills/docs/fabric-guide.md`  
 > **Author**: Peter Heller, Mind Over Metadata LLC  
 > **Fabric version**: 1.4.400+ (WSL2 Ubuntu 24.04 LTS)  
 > **Last updated**: 2026-03-14  

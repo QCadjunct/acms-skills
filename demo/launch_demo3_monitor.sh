@@ -47,7 +47,7 @@ else
   echo -e "  ${YELLOW}⚠${RESET}  Monitor not reachable at ${MONITOR_URL}"
   echo ""
   echo -e "  Start it now from Windows PowerShell:"
-  echo -e "  ${CYAN}  cd \"Z:\\VSCODE Projects\\PythonProjects\\acms-repo\"${RESET}"
+  echo -e "  ${CYAN}  cd \"Z:\\VSCODE Projects\\PythonProjects\\aces-repo\"${RESET}"
   echo -e "  ${CYAN}  .\\launch_monitor.ps1${RESET}"
   echo ""
   echo -e "  Then re-run this script."

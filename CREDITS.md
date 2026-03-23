@@ -1,8 +1,8 @@
 # Credits and Acknowledgments
 
-## acms-skills
+## aces-skills
 **Author**: Peter Heller, Mind Over Metadata LLC  
-**GitHub**: github.com/QCadjunct/acms-skills  
+**GitHub**: github.com/QCadjunct/aces-skills  
 **© 2026 Mind Over Metadata LLC. All rights reserved.**
 
 ---

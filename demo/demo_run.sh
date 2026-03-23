@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # demo_run.sh — Master demo launcher
 # ACMS POC Demo — Mind Over Metadata LLC © 2026 — Peter Heller
-# Run from: ~/projects/acms-skills/demo/
+# Run from: ~/projects/aces-skills/demo/
 # ─────────────────────────────────────────────────────────────────────────────
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,7 +34,7 @@ case "$CHOICE" in
   2) bash demo/demo_02_sync.sh ;;
   3) bash demo/demo_03_cost.sh ;;
   4) echo -e "\n${YELLOW}Run in PowerShell:${RESET}"
-     echo -e "  cd 'Z:\\VSCODE Projects\\PythonProjects\\acms-repo'"
+     echo -e "  cd 'Z:\\VSCODE Projects\\PythonProjects\\aces-repo'"
      echo -e "  powershell -ExecutionPolicy Bypass -File demo\\demo_04_monitor.ps1" ;;
   5) bash demo/demo_05_psa.sh ;;
   6) bash demo/demo_06_fabric.sh ;;

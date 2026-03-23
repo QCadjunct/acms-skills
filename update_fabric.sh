@@ -80,7 +80,7 @@ SYNC_SCRIPT="$SCRIPT_DIR/sync_patterns.sh"
 
 # Try repo location if not in same dir
 if [[ ! -f "$SYNC_SCRIPT" ]]; then
-  SYNC_SCRIPT="$HOME/projects/acms-skills/sync_patterns.sh"
+  SYNC_SCRIPT="$HOME/projects/aces-skills/sync_patterns.sh"
 fi
 if [[ ! -f "$SYNC_SCRIPT" ]]; then
   SYNC_SCRIPT="$(find "$HOME/projects" -name "sync_patterns.sh" 2>/dev/null | head -1)"

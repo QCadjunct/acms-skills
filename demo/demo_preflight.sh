@@ -237,6 +237,6 @@ else
 fi
 
 echo ""
-echo -e "${BOLD}  Repo: github.com/QCadjunct/acms-skills${RESET}"
+echo -e "${BOLD}  Repo: github.com/QCadjunct/aces-skills${RESET}"
 echo -e "${BOLD}  Monitor: http://127.0.0.1:2718${RESET}"
 echo ""

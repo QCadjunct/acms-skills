@@ -14,7 +14,7 @@ PATTERNS_PROD="$HOME/.config/fabric/patterns"
 AUDIT_LOG="$HOME/.config/fabric/deploy_audit.log"
 SCRIPT_VERSION="1.1.0"
 COST_LOG="$HOME/.config/fabric/cost_audit.log"
-UV_PYTHON="$HOME/projects/acms-skills/.venv/bin/python3"
+UV_PYTHON="$HOME/projects/aces-skills/.venv/bin/python3"
 
 # ── Defaults ─────────────────────────────────────────────────
 SOURCE=""

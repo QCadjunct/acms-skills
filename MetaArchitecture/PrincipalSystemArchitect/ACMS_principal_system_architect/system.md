@@ -148,7 +148,7 @@ All elicitation runs write to cost_audit.log (ADR-009 format):
 - fabric >= 1.4.400 (WSL2) — for specialist pattern dispatch
 - Python 3.12+ with uv
 - cost_audit.log writable at ~/.config/fabric/cost_audit.log
-- vendor_rates.yaml accessible at acms-skills/vendor_rates/vendor_rates.yaml
+- vendor_rates.yaml accessible at aces-skills/vendor_rates/vendor_rates.yaml
 - All six RequirementsGathering specialists deployed to patterns_custom/
 
 # ACMS FRAMEWORK MAPPING

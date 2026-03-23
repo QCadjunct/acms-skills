@@ -38,8 +38,8 @@ SOURCE_WEB=""
 SOURCE_FILE=""
 SOURCE_TYPE=""
 WORD_LIMIT=2000
-OUTPUT_BASE="$HOME/projects/acms-skills/FabricStitch/output"
-UV_PYTHON="$HOME/projects/acms-skills/.venv/bin/python3"
+OUTPUT_BASE="$HOME/projects/aces-skills/FabricStitch/output"
+UV_PYTHON="$HOME/projects/aces-skills/.venv/bin/python3"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

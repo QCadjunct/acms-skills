@@ -48,9 +48,9 @@ SOURCE_WEB=""      # Web article URL (any site)
 SOURCE_VIDEO=""    # Local video file
 SOURCE_TYPE=""     # youtube | file | web | video
 WORD_LIMIT=3000
-OUTPUT_BASE="$HOME/projects/acms-skills/FabricStitch/output"
+OUTPUT_BASE="$HOME/projects/aces-skills/FabricStitch/output"
 WIN_OUTPUT_DIR="/mnt/c/Users/pheller/Documents/ACMS-Output"
-UV_PYTHON="$HOME/projects/acms-skills/.venv/bin/python3"
+UV_PYTHON="$HOME/projects/aces-skills/.venv/bin/python3"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

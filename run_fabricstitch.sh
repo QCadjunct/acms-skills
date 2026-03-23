@@ -27,7 +27,7 @@
 
 set -euo pipefail
 
-SKILL_DIR="$HOME/projects/acms-skills/CodingArchitecture/FabricStitch/ACMS_extract_wisdom"
+SKILL_DIR="$HOME/projects/aces-skills/CodingArchitecture/FabricStitch/ACMS_extract_wisdom"
 
 # ── Argument validation ───────────────────────────────────────
 URL="${1:-}"

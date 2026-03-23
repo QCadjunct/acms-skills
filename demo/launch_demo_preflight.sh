@@ -72,28 +72,28 @@ else
   check_fail "Fabric not found" "Install: pip install fabric-ai"
 fi
 
-# ── Check 3: acms-skills repo clean ──────────────────────────────────────────
-echo -e "${CYAN}[3/5]${RESET} acms-skills repo — git status"
-SKILLS_REPO="${HOME}/projects/acms-skills"
+# ── Check 3: aces-skills repo clean ──────────────────────────────────────────
+echo -e "${CYAN}[3/5]${RESET} aces-skills repo — git status"
+SKILLS_REPO="${HOME}/projects/aces-skills"
 if [[ -d "$SKILLS_REPO" ]]; then
   cd "$SKILLS_REPO"
   if git diff --quiet && git diff --cached --quiet; then
     BRANCH=$(git rev-parse --abbrev-ref HEAD)
     COMMIT=$(git log --oneline -1)
-    check_pass "acms-skills clean on ${BRANCH} — ${COMMIT}"
+    check_pass "aces-skills clean on ${BRANCH} — ${COMMIT}"
   else
-    check_warn "acms-skills has uncommitted changes" \
+    check_warn "aces-skills has uncommitted changes" \
       "Run: git status  (changes visible during demo)"
   fi
   cd - > /dev/null
 else
-  check_fail "acms-skills not found at ${SKILLS_REPO}" \
-    "Run: git clone https://github.com/QCadjunct/acms-skills ~/projects/acms-skills"
+  check_fail "aces-skills not found at ${SKILLS_REPO}" \
+    "Run: git clone https://github.com/QCadjunct/aces-skills ~/projects/aces-skills"
 fi
 
 # ── Check 4: deploy_generators.sh present ────────────────────────────────────
 echo -e "${CYAN}[4/5]${RESET} deploy_generators.sh — present and executable"
-DEPLOY_SCRIPT="${HOME}/projects/acms-skills/MetaArchitecture/ACMS_skill_deployers/ACMS_skill_deploy_generators/deploy_generators.sh"
+DEPLOY_SCRIPT="${HOME}/projects/aces-skills/MetaArchitecture/ACMS_skill_deployers/ACMS_skill_deploy_generators/deploy_generators.sh"
 if [[ -x "$DEPLOY_SCRIPT" ]]; then
   check_pass "deploy_generators.sh present and executable"
 elif [[ -f "$DEPLOY_SCRIPT" ]]; then
