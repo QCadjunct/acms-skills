@@ -1,14 +1,12 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # skill_chain.yaml — ACES Skill Chain Definition (canonical WORM form)
 # FQSN: CodingArchitecture/FabricStitch/ACES_fabric_analyze
-# VERSION: 2.0.0
+# VERSION: 3.0.0
 #
-# Each SubAgent runs a different Ollama cloud model optimized for its
-# cognitive task. All run in parallel via asyncio $AND barrier.
+# 7 parallel agents — each with model optimized for cognitive task.
+# Agent 7 (ACES_temporal_gap_analysis) has its own source override:
+#   it fetches the CURRENT repo state while agents 1-6 fetch the article.
 # spawn_delay_ms staggers launch to prevent Ollama queue saturation.
-#
-# Run:
-#   uv run python skill_chain_orchestrator.py --chain=skill_chain.yaml
 # ═══════════════════════════════════════════════════════════════════════════════
 
 title:   "UOR Framework — Parallel Skill Chain Analysis"
@@ -19,18 +17,18 @@ outdir:  "~/fabric-analysis/uor-framework"
 obsidian: ""
 skip_docx: false
 
-# ── PARALLEL SUBAGENTS ────────────────────────────────────────────────────────
-# Each agent uses the model best suited to its cognitive task.
-# spawn_delay_ms staggers launch — prevents all 6 hitting Ollama at t=0.
-# $AND barrier releases when ALL complete (on_failure: retry).
+# ── PARALLEL AGENTS (7 total) ─────────────────────────────────────────────────
+# Agents 1-6: fetch the original article (chain.source)
+# Agent 7:    fetches the CURRENT repo state (source override)
 
 agents:
 
   - pattern: extract_article_wisdom
     label:   "Article Wisdom — summary, ideas, quotes, facts, refs"
     vendor:  "Ollama"
-    model:   "qwen3.5:397b-cloud"     # largest — deep multi-section extraction
-    spawn_delay_ms: 0                  # launch immediately
+    model:   "qwen3.5:397b-cloud"
+    source:  ""                        # uses chain.source
+    spawn_delay_ms: 0
     retry:   1
     timeout: 600
     enabled: true
@@ -38,8 +36,9 @@ agents:
   - pattern: extract_wisdom
     label:   "Deep Wisdom — insights, habits, recommendations"
     vendor:  "Ollama"
-    model:   "qwen3-next:80b-cloud"   # strong reasoning — wisdom synthesis
-    spawn_delay_ms: 3000               # 3s delay — heaviest pattern, give Ollama breathing room
+    model:   "qwen3-next:80b-cloud"
+    source:  ""
+    spawn_delay_ms: 3000
     retry:   1
     timeout: 600
     enabled: true
@@ -47,8 +46,9 @@ agents:
   - pattern: extract_ideas
     label:   "Idea Inventory — all concepts surfaced"
     vendor:  "Ollama"
-    model:   "ministral-3:14b-cloud"  # fast, efficient — enumeration task
-    spawn_delay_ms: 1000               # 1s delay
+    model:   "ministral-3:14b-cloud"
+    source:  ""
+    spawn_delay_ms: 1000
     retry:   1
     timeout: 600
     enabled: true
@@ -56,8 +56,9 @@ agents:
   - pattern: extract_questions
     label:   "Discussion Questions — raw question set"
     vendor:  "Ollama"
-    model:   "gemma4:31b-cloud"       # analytical — question formation needs precision
-    spawn_delay_ms: 1000               # 1s delay
+    model:   "gemma4:31b-cloud"
+    source:  ""
+    spawn_delay_ms: 1000
     retry:   1
     timeout: 300
     enabled: true
@@ -65,8 +66,9 @@ agents:
   - pattern: analyze_claims
     label:   "Claims Analysis — evidence, gaps, counters"
     vendor:  "Ollama"
-    model:   "devstral-small-2:24b-cloud"  # reasoning/logic evaluation
-    spawn_delay_ms: 2000               # 2s delay
+    model:   "devstral-small-2:24b-cloud"
+    source:  ""
+    spawn_delay_ms: 2000
     retry:   1
     timeout: 600
     enabled: true
@@ -74,31 +76,36 @@ agents:
   - pattern: summarize
     label:   "Executive Summary — distilled key points"
     vendor:  "Ollama"
-    model:   "qwen3.5:cloud"          # lighter — distillation is simpler
-    spawn_delay_ms: 500                # 0.5s delay
+    model:   "qwen3.5:cloud"
+    source:  ""
+    spawn_delay_ms: 500
+    retry:   1
+    timeout: 300
+    enabled: true
+
+  - pattern: ACES_temporal_gap_analysis
+    label:   "Temporal Gap — current state vs original claims"
+    vendor:  "Ollama"
+    model:   "glm-4.7:cloud"
+    source:  "https://github.com/QCadjunct/UOR-Framework"
+    spawn_delay_ms: 1500
     retry:   1
     timeout: 300
     enabled: true
 
 # ── $AND BARRIER ──────────────────────────────────────────────────────────────
-# Releases when all enabled agents complete.
-# on_failure: retry — retry each failed agent once before barrier decision
-
 barrier:
   name:       "and_barrier"
   on_failure: "retry"
   required:   []
 
-# ── SYNTHESIS NODE (post-barrier) ─────────────────────────────────────────────
-# Receives complete acquired context from all completed agents.
-# Uses Nemotron — purpose-built for long coherent text generation.
-
+# ── SYNTHESIS NODE ────────────────────────────────────────────────────────────
 synthesis:
-  pattern:    "synthesize_analysis_brief_from_wisdom"
-  vendor:     "Ollama"
-  model:      "nemotron-3-super:cloud"  # NVIDIA — strong long-form generation
-  word_minimum: 5000
-  word_target:  6500
-  word_limit:   8000
+  pattern:        "synthesize_analysis_brief_from_wisdom"
+  vendor:         "Ollama"
+  model:          "gpt-oss:120b-cloud"
+  word_minimum:   5000
+  word_target:    6500
+  word_limit:     8000
   document_limit: 15000
-  directive:  ""   # empty — use pattern's own behavioral contract
+  directive:      ""

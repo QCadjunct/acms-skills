@@ -56,6 +56,8 @@ Parse these from the first lines of input:
   document_limit=N    Total document ceiling including Tier 2. Default: 15000.
   source=URL          Source URL — include in document header.
   title=TEXT          Document title — include in document header.
+  source_date=DATE    Date the source was published (YYYY-MM-DD). Parse from metadata.
+  analysis_date=DATE  Today's date. ALWAYS the current date — never training cutoff.
 
 # TIER 1 — ANALYTICAL BRIEF STRUCTURE
 
@@ -119,6 +121,50 @@ what does the world look like in a decade? Where does the long-horizon potential
 lead? What adjacent systems, industries, or disciplines would be transformed?
 Be willing to take the vision seriously on its own terms — this is the place
 to engage with the ambition, not deflate it.
+
+## §3.5 TEMPORAL GAP ASSESSMENT (structured + prose)
+
+This section is mandatory. It applies Allen Interval temporal logic to
+evaluate the gap between when claims were made and when they are being
+evaluated. A claim that was plausible at t₁ may have failed by t₂ if
+the promised evidence never materialized.
+
+First, establish the temporal frame as a structured block:
+
+| Dimension | Value |
+|---|---|
+| Source date | [date article/repo was published — parse from metadata or URL] |
+| Analysis date | [today's date — ALWAYS current date, never training cutoff assumption] |
+| Gap | [days and years between source and analysis] |
+| Short-term horizon (0–2yr) | [has this window elapsed? yes/no] |
+| Medium-term horizon (2–5yr) | [has this window elapsed? yes/no] |
+
+Then evaluate each short-term goal stated in §3 against the elapsed time.
+For each goal, state:
+- What was promised
+- When it was expected (short/medium/long term)
+- What evidence exists today that it was delivered
+- Allen Interval status: BEFORE (too early to judge) | DURING (within window) |
+  AFTER (window elapsed — verdict required) | FAILED (window elapsed, not delivered)
+
+Then write 300–500 words of analytical prose interpreting the pattern.
+What does the distribution of FAILED vs DELIVERED statuses tell us?
+If the short-term horizon has elapsed and most goals show FAILED, the
+framework has not validated its own claims. If goals show DELIVERED,
+name the specific implementations, communities, or standards that
+materialized. If status is UNKNOWN, state what evidence would be
+required to make a determination and where to look for it.
+
+CRITICAL CONSTRAINTS for this section:
+- The input will contain analysis_date=YYYY-MM-DD — this IS the current date. Use it.
+- NEVER substitute your training cutoff date for analysis_date under any circumstances.
+- If analysis_date=2026-04-05 and source_date=2022-07-13, the gap is 1,362 days. Calculate it.
+- A gap > 730 days means the short-term horizon (0-2yr) has ELAPSED — render verdicts.
+- ALWAYS treat analysis_date as the actual date the pipeline ran, not an assumed date.
+- A gap of 3+ years with no community, no releases, and no adoption
+  is analytically significant — name it explicitly
+- Convergence with other frameworks (IPFS, OCI, RDF) counts as
+  partial delivery only if the UOR framework specifically enabled it
 
 ## §4 CLAIMS VERDICT TABLE (structured)
 
@@ -225,10 +271,11 @@ Read all six completely before producing any output.
 | §1 Analytical Summary | 500 | 600 | 750 |
 | §2 Vision & Strategic Intent | 800 | 1,000 | 1,200 |
 | §3 Goals by Horizon | 1,500 | 1,800 | 2,100 |
+| §3.5 Temporal Gap Assessment | 400 | 500 | 600 |
 | §4 Claims Verdict Table | — | structured | — |
 | §5 Discussion Questions | 1,000 | 1,200 | 1,400 |
 | §6 Recommended Reading | 300 | 400 | 500 |
-| **TIER 1 TOTAL** | **5,000** | **6,500** | **8,000** |
+| **TIER 1 TOTAL** | **5,400** | **7,000** | **8,600** |
 | TIER 2 Archive | verbatim | verbatim | verbatim |
 | **DOCUMENT TOTAL** | — | ~12,000 | **15,000** |
 

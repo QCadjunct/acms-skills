@@ -548,11 +548,22 @@ async def synthesis_node(
         context_map[p] for p in STEP3_PATTERNS if p in context_map
     )
 
+    # Pass explicit dates — model must never infer current date from training cutoff
+    import datetime as _dt
+    analysis_date = _dt.date.today().strftime("%Y-%m-%d")
+
     lines = [
         f"word_minimum={chain.synthesis.word_minimum}",
         f"word_target={chain.synthesis.word_target}",
         f"word_limit={chain.synthesis.word_limit}",
         f"document_limit={chain.synthesis.document_limit}",
+        f"analysis_date={analysis_date}",
+        f"source={chain.source}",
+        "",
+        "CRITICAL: analysis_date above is the ACTUAL current date.",
+        "NEVER use your training cutoff date as the analysis date.",
+        "The temporal gap must be calculated from analysis_date, not from",
+        "any assumed current date in your training data.",
         "",
     ]
 
