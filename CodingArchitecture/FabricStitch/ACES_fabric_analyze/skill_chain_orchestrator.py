@@ -88,13 +88,14 @@ class SubAgentStatus(str, Enum):
 @dataclass
 class SubAgentDef:
     """One node in the parallel execution graph."""
-    pattern:    str
-    label:      str = ""
-    vendor:     str = "Ollama"
-    model:      str = "qwen3.5:397b-cloud"
-    retry:      int = 1          # max retries before marking failed
-    timeout:    int = 600        # seconds before subprocess kill
-    enabled:    bool = True
+    pattern:        str
+    label:          str = ""
+    vendor:         str = "Ollama"
+    model:          str = "qwen3.5:397b-cloud"
+    retry:          int = 1          # max retries before marking failed
+    timeout:        int = 600        # seconds before subprocess kill
+    spawn_delay_ms: int = 0          # stagger launch to prevent Ollama saturation
+    enabled:        bool = True
 
     def __post_init__(self):
         if not self.label:
@@ -112,9 +113,14 @@ class SyncBarrier:
 @dataclass
 class SynthesisNode:
     """Post-barrier synthesis stage."""
-    pattern:    str = "synthesize_eloquent_narrative_from_wisdom"
-    word_limit: int = 4000
-    directive:  str = ""   # theme synthesis_directive; empty=use pattern defaults
+    pattern:        str = "synthesize_analysis_brief_from_wisdom"
+    vendor:         str = "Ollama"
+    model:          str = "nemotron-3-super:cloud"
+    word_minimum:   int = 5000
+    word_target:    int = 6500
+    word_limit:     int = 8000
+    document_limit: int = 15000
+    directive:      str = ""   # empty = use pattern's own behavioral contract
 
 
 @dataclass
@@ -141,13 +147,14 @@ class SkillChain:
 
         agents = [
             SubAgentDef(
-                pattern = a["pattern"],
-                label   = a.get("label", a["pattern"]),
-                vendor  = a.get("vendor", data.get("vendor", "Ollama")),
-                model   = a.get("model",  data.get("model",  "qwen3.5:397b-cloud")),
-                retry   = a.get("retry",  1),
-                timeout = a.get("timeout", 600),
-                enabled = a.get("enabled", True),
+                pattern        = a["pattern"],
+                label          = a.get("label", a["pattern"]),
+                vendor         = a.get("vendor", data.get("vendor", "Ollama")),
+                model          = a.get("model",  data.get("model",  "qwen3.5:397b-cloud")),
+                retry          = a.get("retry",  1),
+                timeout        = a.get("timeout", 600),
+                spawn_delay_ms = a.get("spawn_delay_ms", 0),
+                enabled        = a.get("enabled", True),
             )
             for a in data.get("agents", [])
         ]
@@ -161,10 +168,15 @@ class SkillChain:
 
         syn_data = data.get("synthesis", {})
         synthesis = SynthesisNode(
-            pattern    = syn_data.get("pattern",
-                         "synthesize_eloquent_narrative_from_wisdom"),
-            word_limit = syn_data.get("word_limit", 4000),
-            directive  = syn_data.get("directive", ""),
+            pattern        = syn_data.get("pattern",
+                             "synthesize_analysis_brief_from_wisdom"),
+            vendor         = syn_data.get("vendor", data.get("vendor", "Ollama")),
+            model          = syn_data.get("model",  data.get("model",  "nemotron-3-super:cloud")),
+            word_minimum   = syn_data.get("word_minimum",   5000),
+            word_target    = syn_data.get("word_target",    6500),
+            word_limit     = syn_data.get("word_limit",     8000),
+            document_limit = syn_data.get("document_limit", 15000),
+            directive      = syn_data.get("directive", ""),
         )
 
         return cls(
@@ -226,18 +238,32 @@ class SkillChain:
             "model":  self.model,
             "outdir": self.outdir,
             "agents": [
-                {"pattern": a.pattern, "label": a.label,
-                 "retry": a.retry, "timeout": a.timeout, "enabled": a.enabled}
+                {
+                    "pattern":        a.pattern,
+                    "label":          a.label,
+                    "vendor":         a.vendor,
+                    "model":          a.model,
+                    "spawn_delay_ms": a.spawn_delay_ms,
+                    "retry":          a.retry,
+                    "timeout":        a.timeout,
+                    "enabled":        a.enabled,
+                }
                 for a in self.agents
             ],
             "barrier": {
-                "name": self.barrier.name,
+                "name":       self.barrier.name,
                 "on_failure": self.barrier.on_failure.value,
-                "required": self.barrier.required,
+                "required":   self.barrier.required,
             },
             "synthesis": {
-                "pattern":    self.synthesis.pattern,
-                "word_limit": self.synthesis.word_limit,
+                "pattern":        self.synthesis.pattern,
+                "vendor":         self.synthesis.vendor,
+                "model":          self.synthesis.model,
+                "word_minimum":   self.synthesis.word_minimum,
+                "word_target":    self.synthesis.word_target,
+                "word_limit":     self.synthesis.word_limit,
+                "document_limit": self.synthesis.document_limit,
+                "directive":      self.synthesis.directive,
             },
         }, default_flow_style=False, sort_keys=False)
 
@@ -267,9 +293,14 @@ async def run_subagent(
 ) -> SubAgentResult:
     """
     Async coroutine for one subagent.
+    Staggered launch via spawn_delay_ms — prevents Ollama queue saturation.
     Acquires semaphore slot, runs fabric subprocess, releases slot.
     Retries up to agent.retry times before marking failed.
     """
+    # Staggered launch — each agent waits its delay before acquiring semaphore
+    if agent.spawn_delay_ms > 0:
+        await asyncio.sleep(agent.spawn_delay_ms / 1000)
+
     async with sem:
         t_start = time.perf_counter()
         attempt = 0
@@ -518,7 +549,10 @@ async def synthesis_node(
     )
 
     lines = [
+        f"word_minimum={chain.synthesis.word_minimum}",
+        f"word_target={chain.synthesis.word_target}",
         f"word_limit={chain.synthesis.word_limit}",
+        f"document_limit={chain.synthesis.document_limit}",
         "",
     ]
 
@@ -544,10 +578,14 @@ async def synthesis_node(
     synthesis_input = "\n".join(lines)
 
     # Run synthesis (single call, not parallel)
+    # Use synthesis-specific vendor/model (may differ from extraction agents)
+    synth_vendor = chain.synthesis.vendor if chain.synthesis.vendor else chain.vendor
+    synth_model  = chain.synthesis.model  if chain.synthesis.model  else chain.model
+
     cmd = [
         "fabric",
-        "-V", chain.vendor,
-        "-m", chain.model,
+        "-V", synth_vendor,
+        "-m", synth_model,
         "-p", chain.synthesis.pattern,
     ]
 
@@ -648,7 +686,8 @@ Context keys  : {list(context_map.keys())}
     if not chain.skip_docx:
         try:
             subprocess.run(
-                ["pandoc", str(md_path), "--from", "markdown",
+                ["pandoc", str(md_path),
+                 "--from", "markdown-yaml_metadata_block",
                  "--to", "docx", "--toc", "-o", str(docx_path)],
                 check=True, capture_output=True,
             )
